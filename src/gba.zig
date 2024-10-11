@@ -100,7 +100,7 @@ pub const VramOBJ = packed struct {
 
     /// Hides a sprite without needing a transfer
     pub fn hide(self: *VramOBJ) void {
-        self.attr0 ^= 0x0200;
+        self.attr0 &= ~@as(u16, 0x0200);
     }
 };
 

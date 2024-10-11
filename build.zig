@@ -33,11 +33,11 @@ pub fn build(b: *std.Build) void {
     elf.addAssemblyFile(b.path("src/start.s"));
     elf.setLinkerScript(b.path("src/link.ld"));
 
-    const gba_img_run_test = b.addRunArtifact(gba_img);
-    gba_img_run_test.addFileArg(b.path("assets/test.png"));
-    const output_test = gba_img_run_test.addOutputFileArg("test.zig");
-    gba_img_run_test.addArg("32");
-    elf.root_module.addAnonymousImport("test", .{
+    const gba_img_run_tiles = b.addRunArtifact(gba_img);
+    gba_img_run_tiles.addFileArg(b.path("assets/tiles.png"));
+    const output_test = gba_img_run_tiles.addOutputFileArg("tiles.zig");
+    gba_img_run_tiles.addArg("32");
+    elf.root_module.addAnonymousImport("tiles", .{
         .root_source_file = output_test,
     });
 
@@ -48,7 +48,7 @@ pub fn build(b: *std.Build) void {
     });
     obj_copy.step.dependOn(&elf.step);
 
-    const copy_bin = b.addInstallBinFile(obj_copy.getOutput(), "zig.gba");
+    const copy_bin = b.addInstallBinFile(obj_copy.getOutput(), "2048.gba");
     b.default_step.dependOn(&copy_bin.step);
 
     // Add a run step
