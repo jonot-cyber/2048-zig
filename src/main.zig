@@ -142,22 +142,23 @@ const AddTileError = error{
 };
 
 fn addTile(tiles: *[16]?Tile) AddTileError!void {
-    while (true) {
+    const pos = blk: while (true) {
         const pos = rand.int(u4);
-        if (tiles[pos] == null) {
-            const first_free_obj = blk: for (0..128) |i| {
-                if (!used_objects[i]) {
-                    used_objects[i] = true;
-                    break :blk i;
-                }
-            } else return error.NoSpaceAvailable;
-            tiles[pos] = Tile{
-                .obj_i = @intCast(first_free_obj),
-                .number = if (rand.int(u2) == 0) 1 else 0,
-            };
-            break;
+        if (tiles[pos] != null) {
+            continue;
         }
-    }
+        break :blk pos;
+    };
+    const first_free_obj = blk: for (0..128) |i| {
+        if (!used_objects[i]) {
+            used_objects[i] = true;
+            break :blk i;
+        }
+    } else return error.NoSpaceAvailable;
+    tiles[pos] = Tile{
+        .obj_i = @intCast(first_free_obj),
+        .number = if (rand.int(u2) == 0) 1 else 0,
+    };
 }
 
 fn handleLeft(tiles: *[16]?Tile, just_moved_to: *[16]bool) bool {
@@ -361,6 +362,17 @@ export fn main() noreturn {
         else
             false;
         if (moved) {
+            addTile(&tiles) catch unreachable;
+            updateTiles(tiles);
+        }
+        if (!just_pressed.start) {
+            // Reset
+            for (0..16) |i| {
+                if (tiles[i]) |tile| {
+                    used_objects[tile.obj_i] = false;
+                    tiles[i] = null;
+                }
+            }
             addTile(&tiles) catch unreachable;
             updateTiles(tiles);
         }
