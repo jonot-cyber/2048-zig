@@ -18,21 +18,7 @@ pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size
     gba.copyPalette(.{
         .{},
         .{ .r = 31, .g = 31, .b = 31 },
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-        .{},
-    }, &gba.bg_palettes[0]);
+    } ++ [1]gba.Color{.{}} ** 14, &gba.bg_palettes[0]);
     var ascii_tiles: [128]gba.Tile = undefined;
     for (alphabet.letters, 0..) |l, i| {
         ascii_tiles[i] = alphabet.letterToTile(l);
@@ -333,24 +319,7 @@ export fn main() noreturn {
         just_pressed = input.justPressed(last_input);
         just_released = input.justReleased(last_input);
         last_input = input;
-        var just_moved_to = [16]bool{
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-        };
+        var just_moved_to = [1]bool{false} ** 16;
         const moved = if (!just_pressed.left)
             handleLeft(&tiles, &just_moved_to)
         else if (!just_pressed.right)
