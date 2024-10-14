@@ -82,13 +82,7 @@ var just_released: gba.Keys = undefined;
 var rng = std.rand.DefaultPrng.init(0);
 var rand = rng.random();
 
-var used_objects: [128]bool = undefined;
-
-fn initUsedObjects() void {
-    for (0..128) |i| {
-        used_objects[i] = false;
-    }
-}
+var used_objects: [128]bool = [1]bool{false} ** 128;
 
 fn updateTiles(tiles: [16]?Tile) void {
     for (0..128) |i| {
@@ -286,31 +280,13 @@ fn handleDown(tiles: *[16]?Tile, just_moved_to: *[16]bool) bool {
 }
 
 export fn main() noreturn {
-    initUsedObjects();
     gba.copyPalette(tiles_img.palette, &gba.obj_palettes[0]);
     gba.copyTiles(&tiles_img.tiles, gba.obj_tiles[0..]);
     gba.reg_dispcnt.* = .{
         .display_obj = true,
         .character1d = true,
     };
-    var tiles = [16]?Tile{
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-    };
+    var tiles = [1]?Tile{null} ** 16;
     addTile(&tiles) catch unreachable;
     updateTiles(tiles);
     while (true) {
