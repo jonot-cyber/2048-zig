@@ -29,7 +29,7 @@ fn colorToGBA(color: zigimg.color.Rgba32) GBAColor {
 }
 
 fn paletteFind(palette: []GBAColor, color: GBAColor) ?usize {
-    for (palette, 0..) |p, i| {
+    for (palette[1..], 1..) |p, i| {
         if (p.r == color.r and p.g == color.g and p.b == color.b) {
             return i;
         }
