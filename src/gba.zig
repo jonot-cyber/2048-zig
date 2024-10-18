@@ -27,8 +27,20 @@ pub const Palette = [16]Color;
 /// A tile
 pub const Tile = [8]u32;
 
+/// A tile in the screen block
+pub const ScreenBlockTile = packed struct {
+    /// The tile number
+    tile_number: u10 = 0,
+    /// Horizontal flip
+    hflip: bool = false,
+    /// Vertical flip
+    vflip: bool = false,
+    /// Palette number. Unused in 256 color mode.
+    palette: u4 = 0,
+};
+
 /// A screen-block
-pub const ScreenBlock = [1024]u16;
+pub const ScreenBlock = [1024]ScreenBlockTile;
 
 /// The mode of an object
 const ObjMode = enum(u2) {

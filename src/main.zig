@@ -53,7 +53,7 @@ pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size
                 return error.EndOfBuffer;
             }
             for (data) |d| {
-                gba.bg_map[2][self.iy * 32 + self.ix] = d;
+                gba.bg_map[2][self.iy * 32 + self.ix].tile_number = d;
                 self.ix += 1;
                 if (self.ix >= gba.screen_width / 8) {
                     self.ix = 0;
@@ -94,6 +94,8 @@ var rand = rng.random();
 var used_objects: [128]bool = [1]bool{false} ** 128;
 
 fn updateTiles(tiles: [16]?Tile) void {
+    const x_offset = gba.screen_width / 2 - 64;
+    const y_offset = gba.screen_height / 2 - 64;
     for (0..128) |i| {
         gba.objs[i].set(gba.OBJ{
             .hidden = true,
@@ -101,8 +103,8 @@ fn updateTiles(tiles: [16]?Tile) void {
     }
     for (tiles, 0..) |maybe_tile, i| {
         if (maybe_tile) |tile| {
-            const x: u9 = @intCast(32 * @mod(i, 4));
-            const y: u8 = @intCast(32 * @divFloor(i, 4));
+            const x: u9 = @intCast(32 * @mod(i, 4) + x_offset);
+            const y: u8 = @intCast(32 * @divFloor(i, 4) + y_offset);
             gba.objs[tile.obj_i].set(gba.OBJ{
                 .x = x,
                 .y = y,
@@ -288,6 +290,42 @@ fn handleDown(tiles: *[16]?Tile, just_moved_to: *[16]bool) bool {
     return moved;
 }
 
+fn buildBackground() void {
+    const y_origin = gba.screen_height / 16 - 8;
+    const x_origin = gba.screen_width / 16 - 8;
+    for (0..4) |box_y| {
+        for (0..4) |box_x| {
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 0) + (x_origin + box_x * 4 + 0)].tile_number = 1;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 0) + (x_origin + box_x * 4 + 1)].tile_number = 2;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 0) + (x_origin + box_x * 4 + 2)].tile_number = 2;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 0) + (x_origin + box_x * 4 + 3)].tile_number = 1;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 0) + (x_origin + box_x * 4 + 3)].hflip = true;
+
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 1) + (x_origin + box_x * 4 + 0)].tile_number = 3;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 1) + (x_origin + box_x * 4 + 1)].tile_number = 4;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 1) + (x_origin + box_x * 4 + 2)].tile_number = 4;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 1) + (x_origin + box_x * 4 + 3)].tile_number = 3;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 1) + (x_origin + box_x * 4 + 3)].hflip = true;
+
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 2) + (x_origin + box_x * 4 + 0)].tile_number = 3;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 2) + (x_origin + box_x * 4 + 1)].tile_number = 4;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 2) + (x_origin + box_x * 4 + 2)].tile_number = 4;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 2) + (x_origin + box_x * 4 + 3)].tile_number = 3;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 2) + (x_origin + box_x * 4 + 3)].hflip = true;
+
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 3) + (x_origin + box_x * 4 + 0)].tile_number = 1;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 3) + (x_origin + box_x * 4 + 1)].tile_number = 2;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 3) + (x_origin + box_x * 4 + 2)].tile_number = 2;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 3) + (x_origin + box_x * 4 + 3)].tile_number = 1;
+            gba.bg_map[1][32 * (y_origin + box_y * 4 + 3) + (x_origin + box_x * 4 + 3)].hflip = true;
+            for (0..4) |i| {
+                gba.bg_map[1][32 * (y_origin + box_y * 4 + 3) + (x_origin + box_x * 4 + i)].vflip = true;
+            }
+        }
+    }
+    gba.bg_map[1][32 * (gba.screen_height / 16 - 8) + gba.screen_width / 16 - 8].tile_number = 1;
+}
+
 const tiles_palette_compressed align(4) = compress.rlCompress(@ptrCast(&tiles_img.palette), @sizeOf(@TypeOf(tiles_img.palette)));
 const tiles_tiles_compressed align(4) = compress.rlCompress(@ptrCast(&tiles_img.tiles), @sizeOf(@TypeOf(tiles_img.tiles)));
 
@@ -308,6 +346,7 @@ export fn main() noreturn {
         .tile_data = 0,
         .map_data = 1,
     };
+    buildBackground();
     var tiles = [1]?Tile{null} ** 16;
     addTile(&tiles) catch unreachable;
     updateTiles(tiles);
