@@ -25,7 +25,7 @@ pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size
         .{ .r = 31, .g = 31, .b = 31 },
     } ++ [1]gba.Color{.{}} ** 14, &gba.bg_palettes[0]);
     var alphabet_letters: [@sizeOf(@TypeOf(_alphabet_letters))]u8 = undefined;
-    bios.rlUncompReadNormalWrite16Bit(@ptrCast(&alphabet_letters_compressed), @ptrCast(&alphabet_letters));
+    bios.rlUncompReadNormalWrite8Bit(@ptrCast(&alphabet_letters_compressed), @ptrCast(&alphabet_letters));
     bios.bitUnpack(@ptrCast(&alphabet_letters), @ptrCast(gba.bg_tiles[0..]), &.{
         .zero_data = false,
         .data_offset = 0,
