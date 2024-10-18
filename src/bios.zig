@@ -13,7 +13,7 @@ pub fn rlUncompReadNormalWrite16Bit(source: [*]align(4) const u8, destination: [
 }
 
 /// Unpack bitmap data.
-pub fn bitUnpack(source: [*]const u8, destination: [*]align(4) u8, info: *compress.BitUnPackInfo) void {
+pub fn bitUnpack(source: [*]const u8, destination: [*]align(4) u8, info: *const compress.BitUnPackInfo) void {
     const unpacked_data_size_bits = info.source_length * info.destination_unit_width / info.source_unit_width;
     // Source data must be a multiple of 4 bytes
     std.debug.assert(unpacked_data_size_bits % 32 == 0);
