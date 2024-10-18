@@ -35,10 +35,19 @@ pub fn build(b: *std.Build) void {
 
     const gba_img_run_tiles = b.addRunArtifact(gba_img);
     gba_img_run_tiles.addFileArg(b.path("assets/tiles.png"));
-    const output_test = gba_img_run_tiles.addOutputFileArg("tiles.zig");
+    const output_tiles = gba_img_run_tiles.addOutputFileArg("tiles.zig");
     gba_img_run_tiles.addArg("32");
     elf.root_module.addAnonymousImport("tiles", .{
-        .root_source_file = output_test,
+        .root_source_file = output_tiles,
+    });
+
+    const gba_img_run_bg = b.addRunArtifact(gba_img);
+    gba_img_run_bg.addFileArg(b.path("assets/bg.png"));
+    const output_bg = gba_img_run_bg.addOutputFileArg("bg.zig");
+
+    gba_img_run_bg.addArg("32");
+    elf.root_module.addAnonymousImport("bg", .{
+        .root_source_file = output_bg,
     });
 
     _ = b.addInstallArtifact(elf, .{});
