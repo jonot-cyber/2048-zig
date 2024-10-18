@@ -8,7 +8,8 @@ const compress = @import("compress.zig");
 const tiles_img = @import("tiles");
 const bg_img = @import("bg");
 
-const alphabet_letters = alphabet.processLetters(alphabet.letters);
+const _alphabet_letters = alphabet.processLetters(alphabet.letters);
+const alphabet_letters_compressed align(4) = compress.rlCompress(@ptrCast(&_alphabet_letters), @sizeOf(@TypeOf(_alphabet_letters)));
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size: ?usize) noreturn {
     @setCold(true);
     if (builtin.mode == .ReleaseSmall) {
@@ -23,10 +24,12 @@ pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size
         .{},
         .{ .r = 31, .g = 31, .b = 31 },
     } ++ [1]gba.Color{.{}} ** 14, &gba.bg_palettes[0]);
+    var alphabet_letters: [@sizeOf(@TypeOf(_alphabet_letters))]u8 = undefined;
+    bios.rlUncompReadNormalWrite16Bit(@ptrCast(&alphabet_letters_compressed), @ptrCast(&alphabet_letters));
     bios.bitUnpack(@ptrCast(&alphabet_letters), @ptrCast(gba.bg_tiles[0..]), &.{
         .zero_data = false,
         .data_offset = 0,
-        .source_length = @sizeOf(@TypeOf(alphabet_letters)),
+        .source_length = @sizeOf(@TypeOf(_alphabet_letters)),
         .source_unit_width = 1,
         .destination_unit_width = 4,
     });
