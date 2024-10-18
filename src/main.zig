@@ -6,6 +6,7 @@ const bios = @import("bios.zig");
 const compress = @import("compress.zig");
 
 const tiles_img = @import("tiles");
+const bg_img = @import("bg");
 
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size: ?usize) noreturn {
     @setCold(true);
@@ -284,12 +285,22 @@ fn handleDown(tiles: *[16]?Tile, just_moved_to: *[16]bool) bool {
 const tiles_palette_compressed = compress.rlCompress(@ptrCast(&tiles_img.palette), @sizeOf(@TypeOf(tiles_img.palette)));
 const tiles_tiles_compressed = compress.rlCompress(@ptrCast(&tiles_img.tiles), @sizeOf(@TypeOf(tiles_img.tiles)));
 
+const bg_palette_compressed = compress.rlCompress(@ptrCast(&bg_img.palette), @sizeOf(@TypeOf(bg_img.palette)));
+const bg_tiles_compressed = compress.rlCompress(@ptrCast(&bg_img.tiles), @sizeOf(@TypeOf(bg_img.tiles)));
+
 export fn main() noreturn {
     bios.rlUncompReadNormalWrite16Bit(&tiles_palette_compressed, @ptrCast(&gba.obj_palettes[0]));
     bios.rlUncompReadNormalWrite16Bit(&tiles_tiles_compressed, @ptrCast(&gba.obj_tiles[0]));
+    bios.rlUncompReadNormalWrite16Bit(&bg_palette_compressed, @ptrCast(&gba.bg_palettes[0]));
+    bios.rlUncompReadNormalWrite16Bit(&bg_tiles_compressed, @ptrCast(&gba.bg_tiles[0]));
     gba.reg_dispcnt.* = .{
         .display_obj = true,
+        .display_bg0 = true,
         .character1d = true,
+    };
+    gba.reg_bg0cnt.* = .{
+        .tile_data = 0,
+        .map_data = 1,
     };
     var tiles = [1]?Tile{null} ** 16;
     addTile(&tiles) catch unreachable;
