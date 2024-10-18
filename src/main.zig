@@ -10,7 +10,7 @@ const bg_img = @import("bg");
 
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size: ?usize) noreturn {
     @setCold(true);
-    if (builtin.mode == .ReleaseSmall) {
+    if (builtin.mode == .ReleaseSmall or builtin.mode == .ReleaseFast) {
         while (true) {}
     }
 
