@@ -2,24 +2,6 @@ const gba = @import("gba.zig");
 
 const Letter = [8]u8;
 
-pub fn letterToTile(letter: Letter) gba.Tile {
-    var ret: gba.Tile = undefined;
-    for (letter, 0..) |l, i| {
-        var accum: u32 = 0x00000000;
-        const lr: u32 = @intCast(@bitReverse(l));
-        accum |= (lr & 1);
-        accum |= (lr & 2) << 3;
-        accum |= (lr & 4) << 6;
-        accum |= (lr & 8) << 9;
-        accum |= (lr & 16) << 12;
-        accum |= (lr & 32) << 15;
-        accum |= (lr & 64) << 18;
-        accum |= (lr & 128) << 21;
-        ret[i] = accum;
-    }
-    return ret;
-}
-
 const blank_tile = .{ 0, 0, 0, 0, 0, 0, 0, 0 };
 const exclamation_mark_tile = .{
     0b11100000,
@@ -1092,3 +1074,14 @@ pub const letters: [128]Letter = .{
     tilde_tile,
     blank_tile,
 };
+
+pub fn processLetters(comptime in_letters: [128]Letter) [128]Letter {
+    @setEvalBranchQuota(128 * 20);
+    var ret: [128]Letter = undefined;
+    for (in_letters, &ret) |l, *o| {
+        for (0..8) |i| {
+            o.*[i] = @bitReverse(l[i]);
+        }
+    }
+    return ret;
+}
