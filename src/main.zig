@@ -282,11 +282,11 @@ fn handleDown(tiles: *[16]?Tile, just_moved_to: *[16]bool) bool {
     return moved;
 }
 
-const tiles_palette_compressed = compress.rlCompress(@ptrCast(&tiles_img.palette), @sizeOf(@TypeOf(tiles_img.palette)));
-const tiles_tiles_compressed = compress.rlCompress(@ptrCast(&tiles_img.tiles), @sizeOf(@TypeOf(tiles_img.tiles)));
+const tiles_palette_compressed align(4) = compress.rlCompress(@ptrCast(&tiles_img.palette), @sizeOf(@TypeOf(tiles_img.palette)));
+const tiles_tiles_compressed align(4) = compress.rlCompress(@ptrCast(&tiles_img.tiles), @sizeOf(@TypeOf(tiles_img.tiles)));
 
-const bg_palette_compressed = compress.rlCompress(@ptrCast(&bg_img.palette), @sizeOf(@TypeOf(bg_img.palette)));
-const bg_tiles_compressed = compress.rlCompress(@ptrCast(&bg_img.tiles), @sizeOf(@TypeOf(bg_img.tiles)));
+const bg_palette_compressed align(4) = compress.rlCompress(@ptrCast(&bg_img.palette), @sizeOf(@TypeOf(bg_img.palette)));
+const bg_tiles_compressed align(4) = compress.rlCompress(@ptrCast(&bg_img.tiles), @sizeOf(@TypeOf(bg_img.tiles)));
 
 export fn main() noreturn {
     bios.rlUncompReadNormalWrite16Bit(&tiles_palette_compressed, @ptrCast(&gba.obj_palettes[0]));

@@ -49,6 +49,7 @@ pub fn build(b: *std.Build) void {
     elf.root_module.addAnonymousImport("bg", .{
         .root_source_file = output_bg,
     });
+    b.installArtifact(elf);
 
     _ = b.addInstallArtifact(elf, .{});
 
