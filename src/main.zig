@@ -2,6 +2,8 @@ const std = @import("std");
 const builtin = @import("builtin");
 pub const gba = @import("gba.zig");
 const alphabet = @import("alphabet.zig");
+const bios = @import("bios.zig");
+const compress = @import("compress.zig");
 
 const tiles_img = @import("tiles");
 
@@ -279,9 +281,16 @@ fn handleDown(tiles: *[16]?Tile, just_moved_to: *[16]bool) bool {
     return moved;
 }
 
+const tiles_palette_compressed = compress.rlCompress(@ptrCast(&tiles_img.palette), @sizeOf(@TypeOf(tiles_img.palette)));
+const tiles_tiles_compressed = compress.rlCompress(@ptrCast(&tiles_img.tiles), @sizeOf(@TypeOf(tiles_img.tiles)));
+
+export fn what0() callconv(.C) usize {
+    return tiles_tiles_compressed.len;
+}
+
 export fn main() noreturn {
-    gba.copyPalette(tiles_img.palette, &gba.obj_palettes[0]);
-    gba.copyTiles(&tiles_img.tiles, gba.obj_tiles[0..]);
+    bios.rlUncompReadNormalWrite16Bit(&tiles_palette_compressed, @ptrCast(&gba.obj_palettes[0]));
+    bios.rlUncompReadNormalWrite16Bit(&tiles_tiles_compressed, @ptrCast(&gba.obj_tiles[0]));
     gba.reg_dispcnt.* = .{
         .display_obj = true,
         .character1d = true,
