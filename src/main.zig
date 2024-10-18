@@ -284,10 +284,6 @@ fn handleDown(tiles: *[16]?Tile, just_moved_to: *[16]bool) bool {
 const tiles_palette_compressed = compress.rlCompress(@ptrCast(&tiles_img.palette), @sizeOf(@TypeOf(tiles_img.palette)));
 const tiles_tiles_compressed = compress.rlCompress(@ptrCast(&tiles_img.tiles), @sizeOf(@TypeOf(tiles_img.tiles)));
 
-export fn what0() callconv(.C) usize {
-    return tiles_tiles_compressed.len;
-}
-
 export fn main() noreturn {
     bios.rlUncompReadNormalWrite16Bit(&tiles_palette_compressed, @ptrCast(&gba.obj_palettes[0]));
     bios.rlUncompReadNormalWrite16Bit(&tiles_tiles_compressed, @ptrCast(&gba.obj_tiles[0]));
