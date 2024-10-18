@@ -45,7 +45,7 @@ pub fn build(b: *std.Build) void {
     gba_img_run_bg.addFileArg(b.path("assets/bg.png"));
     const output_bg = gba_img_run_bg.addOutputFileArg("bg.zig");
 
-    gba_img_run_bg.addArg("32");
+    gba_img_run_bg.addArg("8");
     elf.root_module.addAnonymousImport("bg", .{
         .root_source_file = output_bg,
     });
