@@ -122,3 +122,17 @@ pub fn rlCompress(comptime data: [*]const u8, comptime size: usize) [rlCompressS
 
     return ret;
 }
+
+/// Information passed to bios.bitUnPack
+pub const BitUnPackInfo = packed struct {
+    /// How long the source data is
+    source_length: u16,
+    /// How big a unit is in the source data
+    source_unit_width: u8,
+    /// How big a unit is in the destination data
+    destination_unit_width: u8,
+    /// How much to offset each unit
+    data_offset: u31,
+    /// Whether to offset units that equal zero
+    zero_data: bool,
+};
