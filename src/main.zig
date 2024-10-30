@@ -216,13 +216,13 @@ export fn main() noreturn {
             const just_pressed = input.justPressed(last_input);
             last_input = input;
             const res = if (!just_pressed.right)
-                tile.slideRight(tiles)
+                tile.slideRight(&tiles)
             else if (!just_pressed.left)
-                tile.slideLeft(tiles)
+                tile.slideLeft(&tiles)
             else if (!just_pressed.down)
-                tile.slideDown(tiles)
+                tile.slideDown(&tiles)
             else if (!just_pressed.up)
-                tile.slideUp(tiles)
+                tile.slideUp(&tiles)
             else
                 null;
             if (res) |v| {

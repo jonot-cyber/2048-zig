@@ -89,18 +89,18 @@ pub fn slideDir(tiles: *const [16]?u32, indexes: *const [16]usize) struct { bool
     return .{ moved, out };
 }
 
-pub fn slideRight(tiles: [16]?u32) struct { bool, [16]?WorkTile } {
-    return slideDir(&tiles, &.{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
+pub fn slideRight(tiles: *const [16]?u32) struct { bool, [16]?WorkTile } {
+    return slideDir(tiles, &.{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
 }
 
-pub fn slideLeft(tiles: [16]?u32) struct { bool, [16]?WorkTile } {
-    return slideDir(&tiles, &.{ 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12 });
+pub fn slideLeft(tiles: *const [16]?u32) struct { bool, [16]?WorkTile } {
+    return slideDir(tiles, &.{ 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12 });
 }
 
-pub fn slideDown(tiles: [16]?u32) struct { bool, [16]?WorkTile } {
-    return slideDir(&tiles, &.{ 0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15 });
+pub fn slideDown(tiles: *const [16]?u32) struct { bool, [16]?WorkTile } {
+    return slideDir(tiles, &.{ 0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15 });
 }
 
-pub fn slideUp(tiles: [16]?u32) struct { bool, [16]?WorkTile } {
-    return slideDir(&tiles, &.{ 12, 8, 4, 0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3 });
+pub fn slideUp(tiles: *const [16]?u32) struct { bool, [16]?WorkTile } {
+    return slideDir(tiles, &.{ 12, 8, 4, 0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3 });
 }
