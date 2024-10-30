@@ -11,7 +11,7 @@ pub fn addTile(tiles: *[16]?u32, rand: std.rand.Random) void {
     tiles[free_idx] = if (rand.int(u2) == 0) 1 else 0;
 }
 
-const WorkTile = struct {
+pub const WorkTile = struct {
     value: u32,
     merged: bool,
     from: usize,

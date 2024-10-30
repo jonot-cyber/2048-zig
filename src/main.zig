@@ -106,6 +106,64 @@ fn indexToCoordinates(index: usize) struct { x: usize, y: usize } {
     };
 }
 
+const animation_speed = 6;
+fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
+    const AnimateTile = struct {
+        i: usize,
+        value: usize,
+        x: isize,
+        y: isize,
+        speed_x: isize,
+        speed_y: isize,
+    };
+    var animate_tiles: [16]?AnimateTile = [1]?AnimateTile{null} ** 16;
+    var obj_i: usize = 0;
+    for (work_tiles, 0..) |work_tile_maybe, i| {
+        if (work_tile_maybe) |work_tile| {
+            const from_coords = indexToCoordinates(work_tile.from);
+            const to_coords = indexToCoordinates(i);
+            const from_x: isize = @intCast(from_coords.x * 32);
+            const from_y: isize = @intCast(from_coords.y * 32);
+            const to_x: isize = @intCast(to_coords.x * 32);
+            const to_y: isize = @intCast(to_coords.y * 32);
+
+            const x_speed = @divFloor(to_x - from_x, animation_speed);
+            const y_speed = @divFloor(to_y - from_y, animation_speed);
+
+            animate_tiles[i] = .{
+                .i = obj_i,
+                .value = work_tile.value,
+                .x = from_x,
+                .y = from_y,
+                .speed_x = x_speed,
+                .speed_y = y_speed,
+            };
+            obj_i += 1;
+        }
+    }
+
+    for (0..128) |i| {
+        gba.objs[i].set(gba.OBJ{
+            .hidden = true,
+        });
+    }
+    for (0..animation_speed) |_| {
+        gba.hBlankWait();
+        for (&animate_tiles) |*animate_tile_maybe| {
+            if (animate_tile_maybe.*) |*animate_tile| {
+                gba.objs[animate_tile.i].set(gba.OBJ{
+                    .x = @intCast(animate_tile.x),
+                    .y = @intCast(animate_tile.y),
+                    .size = .size32,
+                    .tile_number = @intCast(animate_tile.value * 16),
+                });
+                animate_tile.x += animate_tile.speed_x;
+                animate_tile.y += animate_tile.speed_y;
+            }
+        }
+    }
+}
+
 fn renderTiles(tiles: [16]?u32) void {
     for (0..128) |i| {
         gba.objs[i].set(gba.OBJ{
@@ -127,6 +185,14 @@ fn renderTiles(tiles: [16]?u32) void {
     }
 }
 
+fn tilesFromWorkTiles(work_tiles: *const [16]?tile.WorkTile) [16]?u32 {
+    var ret: [16]?u32 = undefined;
+    for (work_tiles, 0..) |work_tile_maybe, i| {
+        ret[i] = if (work_tile_maybe) |work_tile| work_tile.value else null;
+    }
+    return ret;
+}
+
 export fn main() noreturn {
     gba.copyPalette(tiles_img.palette, &gba.obj_palettes[0]);
     gba.copyTiles(tiles_img.tiles[0..], gba.obj_tiles[0..]);
@@ -136,7 +202,7 @@ export fn main() noreturn {
     };
 
     var tiles: [16]?u32 = [1]?u32{null} ** 16;
-    tiles[0] = 0;
+    tile.addTile(&tiles, rand);
     renderTiles(tiles);
 
     var animate: ?u32 = null;
@@ -151,46 +217,26 @@ export fn main() noreturn {
             last_input = input;
             if (!just_pressed.right) {
                 const work_tiles = tile.slideRight(tiles);
-                for (0..16) |tile_i| {
-                    if (work_tiles[tile_i]) |work_tile| {
-                        tiles[tile_i] = work_tile.value;
-                    } else {
-                        tiles[tile_i] = null;
-                    }
-                }
+                animateTiles(&work_tiles);
+                tiles = tilesFromWorkTiles(&work_tiles);
                 tile.addTile(&tiles, rand);
                 renderTiles(tiles);
             } else if (!just_pressed.left) {
                 const work_tiles = tile.slideLeft(tiles);
-                for (0..16) |tile_i| {
-                    if (work_tiles[tile_i]) |work_tile| {
-                        tiles[tile_i] = work_tile.value;
-                    } else {
-                        tiles[tile_i] = null;
-                    }
-                }
+                animateTiles(&work_tiles);
+                tiles = tilesFromWorkTiles(&work_tiles);
                 tile.addTile(&tiles, rand);
                 renderTiles(tiles);
             } else if (!just_pressed.down) {
                 const work_tiles = tile.slideDown(tiles);
-                for (0..16) |tile_i| {
-                    if (work_tiles[tile_i]) |work_tile| {
-                        tiles[tile_i] = work_tile.value;
-                    } else {
-                        tiles[tile_i] = null;
-                    }
-                }
+                animateTiles(&work_tiles);
+                tiles = tilesFromWorkTiles(&work_tiles);
                 tile.addTile(&tiles, rand);
                 renderTiles(tiles);
             } else if (!just_pressed.up) {
                 const work_tiles = tile.slideUp(tiles);
-                for (0..16) |tile_i| {
-                    if (work_tiles[tile_i]) |work_tile| {
-                        tiles[tile_i] = work_tile.value;
-                    } else {
-                        tiles[tile_i] = null;
-                    }
-                }
+                animateTiles(&work_tiles);
+                tiles = tilesFromWorkTiles(&work_tiles);
                 tile.addTile(&tiles, rand);
                 renderTiles(tiles);
             }
