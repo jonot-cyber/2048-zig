@@ -105,6 +105,31 @@ fn indexToCoordinates(index: usize) struct { x: usize, y: usize } {
     };
 }
 
+const InputBuffer = enum {
+    None,
+    Right,
+    Left,
+    Down,
+    Up,
+};
+
+var buffered_input: InputBuffer = InputBuffer.None;
+fn processInput() void {
+    const keys = gba.reg_keyinput.*;
+    const just_pressed = keys.justPressed(last_input);
+    buffered_input = if (!just_pressed.right)
+        InputBuffer.Right
+    else if (!just_pressed.left)
+        InputBuffer.Left
+    else if (!just_pressed.down)
+        InputBuffer.Down
+    else if (!just_pressed.up)
+        InputBuffer.Up
+    else
+        buffered_input;
+    last_input = keys;
+}
+
 const animation_speed = 6;
 fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
     const AnimateTile = struct {
@@ -148,6 +173,7 @@ fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
     }
     for (0..animation_speed) |_| {
         gba.hBlankWait();
+        processInput();
         for (&animate_tiles) |*animate_tile_maybe| {
             if (animate_tile_maybe.*) |*animate_tile| {
                 gba.objs[animate_tile.i].set(gba.OBJ{
@@ -248,35 +274,25 @@ export fn main() noreturn {
     var tiles: [16]?u32 = [1]?u32{null} ** 16;
     tile.addTile(&tiles, rand);
     renderTiles(tiles);
-
-    var animate: ?u32 = null;
     while (true) {
         gba.hBlankWait();
-        if (animate) |i| {
-            if (i == 0) {}
-            animate = if (i == 0) null else i - 1;
-        } else {
-            const input = gba.reg_keyinput.*;
-            const just_pressed = input.justPressed(last_input);
-            last_input = input;
-            const res = if (!just_pressed.right)
-                tile.slideRight(&tiles)
-            else if (!just_pressed.left)
-                tile.slideLeft(&tiles)
-            else if (!just_pressed.down)
-                tile.slideDown(&tiles)
-            else if (!just_pressed.up)
-                tile.slideUp(&tiles)
-            else
-                null;
-            if (res) |v| {
-                // Movement
-                if (v[0]) {
-                    animateTiles(&v[1]);
-                    tiles = tilesFromWorkTiles(&v[1]);
-                    tile.addTile(&tiles, rand);
-                    renderTiles(tiles);
-                }
+
+        processInput();
+        const res = switch (buffered_input) {
+            InputBuffer.None => null,
+            InputBuffer.Right => tile.slideRight(&tiles),
+            InputBuffer.Left => tile.slideLeft(&tiles),
+            InputBuffer.Down => tile.slideDown(&tiles),
+            InputBuffer.Up => tile.slideUp(&tiles),
+        };
+        buffered_input = InputBuffer.None;
+        if (res) |v| {
+            // Movement
+            if (v[0]) {
+                animateTiles(&v[1]);
+                tiles = tilesFromWorkTiles(&v[1]);
+                tile.addTile(&tiles, rand);
+                renderTiles(tiles);
             }
         }
     }
