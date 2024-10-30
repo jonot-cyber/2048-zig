@@ -215,30 +215,24 @@ export fn main() noreturn {
             const input = gba.reg_keyinput.*;
             const just_pressed = input.justPressed(last_input);
             last_input = input;
-            if (!just_pressed.right) {
-                const work_tiles = tile.slideRight(tiles);
-                animateTiles(&work_tiles);
-                tiles = tilesFromWorkTiles(&work_tiles);
-                tile.addTile(&tiles, rand);
-                renderTiles(tiles);
-            } else if (!just_pressed.left) {
-                const work_tiles = tile.slideLeft(tiles);
-                animateTiles(&work_tiles);
-                tiles = tilesFromWorkTiles(&work_tiles);
-                tile.addTile(&tiles, rand);
-                renderTiles(tiles);
-            } else if (!just_pressed.down) {
-                const work_tiles = tile.slideDown(tiles);
-                animateTiles(&work_tiles);
-                tiles = tilesFromWorkTiles(&work_tiles);
-                tile.addTile(&tiles, rand);
-                renderTiles(tiles);
-            } else if (!just_pressed.up) {
-                const work_tiles = tile.slideUp(tiles);
-                animateTiles(&work_tiles);
-                tiles = tilesFromWorkTiles(&work_tiles);
-                tile.addTile(&tiles, rand);
-                renderTiles(tiles);
+            const res = if (!just_pressed.right)
+                tile.slideRight(tiles)
+            else if (!just_pressed.left)
+                tile.slideLeft(tiles)
+            else if (!just_pressed.down)
+                tile.slideDown(tiles)
+            else if (!just_pressed.up)
+                tile.slideUp(tiles)
+            else
+                null;
+            if (res) |v| {
+                // Movement
+                if (v[0]) {
+                    animateTiles(&v[1]);
+                    tiles = tilesFromWorkTiles(&v[1]);
+                    tile.addTile(&tiles, rand);
+                    renderTiles(tiles);
+                }
             }
         }
     }
