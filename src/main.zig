@@ -131,7 +131,7 @@ fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
 
             animate_tiles[i] = .{
                 .i = obj_i,
-                .value = work_tile.value,
+                .value = if (work_tile.merged) work_tile.value - 1 else work_tile.value,
                 .x = from_x,
                 .y = from_y,
                 .speed_x = x_speed,
