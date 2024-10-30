@@ -1,28 +1,28 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+
     const gba_img = b.addExecutable(.{
         .name = "gbaimg",
         .root_source_file = b.path("tools/gbaimg.zig"),
-        .target = b.host,
+        .optimize = optimize,
+        .target = b.standardTargetOptions(.{}),
         .link_libc = true,
     });
 
-    const target = b.standardTargetOptions(.{
-        .default_target = .{
-            .cpu_arch = .thumb,
-            .cpu_model = .{
-                .explicit = &std.Target.arm.cpu.arm7tdmi,
-            },
-            .os_tag = .freestanding,
-            .abi = .eabi,
+    const target2 = b.resolveTargetQuery(.{
+        .cpu_arch = .thumb,
+        .cpu_model = .{
+            .explicit = &std.Target.arm.cpu.arm7tdmi,
         },
+        .os_tag = .freestanding,
+        .abi = .eabi,
     });
-    const optimize = b.standardOptimizeOption(.{});
     const elf = b.addExecutable(.{
         .name = "zig.elf",
         .root_source_file = b.path("src/main.zig"),
-        .target = target,
+        .target = target2,
         .optimize = optimize,
         .single_threaded = true,
         .link_libc = false,
