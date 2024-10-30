@@ -99,6 +99,13 @@ var rand = rng.random();
 
 var last_input: gba.Keys = .{};
 
+fn indexToCoordinates(index: usize) struct { x: usize, y: usize } {
+    return .{
+        .x = index % 4,
+        .y = index / 4,
+    };
+}
+
 fn renderTiles(tiles: [16]?u32) void {
     for (0..128) |i| {
         gba.objs[i].set(gba.OBJ{
@@ -108,11 +115,12 @@ fn renderTiles(tiles: [16]?u32) void {
     var idx: usize = 0;
     for (tiles, 0..) |t, i| {
         if (t) |til| {
+            const coords = indexToCoordinates(i);
             gba.objs[idx].set(gba.OBJ{
                 .size = .size32,
                 .tile_number = @intCast(til * 16),
-                .x = @intCast((i % 4) * 32),
-                .y = @intCast((i / 4) * 32),
+                .x = @intCast(coords.x * 32),
+                .y = @intCast(coords.y * 32),
             });
             idx += 1;
         }
@@ -127,7 +135,7 @@ export fn main() noreturn {
         .display_obj = true,
     };
 
-    var tiles: [16]?u32 = [1]?u32{undefined} ** 16;
+    var tiles: [16]?u32 = [1]?u32{null} ** 16;
     tiles[0] = 0;
     renderTiles(tiles);
 
