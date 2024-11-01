@@ -62,11 +62,7 @@ pub fn build(b: *std.Build) void {
     b.default_step.dependOn(&copy_bin.step);
 
     // Add a run step
-    const run_step_command = b.addSystemCommand(&.{
-        "flatpak",
-        "run",
-        "io.mgba.mGBA",
-    });
+    const run_step_command = b.addSystemCommand(&.{"mgba-qt"});
     run_step_command.addFileArg(obj_copy.getOutput());
     run_step_command.step.dependOn(&obj_copy.step);
 
