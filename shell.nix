@@ -9,6 +9,5 @@ pkgs.mkShellNoCC {
     mgba
     qt5.qtwayland
     git
-    nanoboyadvance
   ];
 }
