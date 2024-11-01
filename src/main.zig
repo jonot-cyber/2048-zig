@@ -130,7 +130,7 @@ fn processInput() void {
     last_input = keys;
 }
 
-const animation_speed = 6;
+const animation_speed = 8;
 fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
     const AnimateTile = struct {
         i: usize,
@@ -151,9 +151,8 @@ fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
             const to_x: isize = @intCast(to_coords.x * 32 + x_offset);
             const to_y: isize = @intCast(to_coords.y * 32 + y_offset);
 
-            const x_speed = @divFloor(to_x - from_x, animation_speed);
-            const y_speed = @divFloor(to_y - from_y, animation_speed);
-
+            const x_speed = @divTrunc(to_x - from_x, animation_speed);
+            const y_speed = @divTrunc(to_y - from_y, animation_speed);
             animate_tiles[i] = .{
                 .i = obj_i,
                 .value = if (work_tile.merged) work_tile.value - 1 else work_tile.value,
@@ -293,6 +292,10 @@ export fn main() noreturn {
                 tiles = tilesFromWorkTiles(&v[1]);
                 tile.addTile(&tiles, rand);
                 renderTiles(tiles);
+                if (tile.detectLoss(&tiles)) {
+                    gba.reg_dispcnt.forced_blank = true;
+                    while (true) {}
+                }
             }
         }
     }

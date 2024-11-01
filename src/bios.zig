@@ -41,3 +41,25 @@ pub fn bitUnpack(source: [*]const u8, destination: [*]align(4) u8, info: *const 
         : "r0", "r1", "r2", "r3"
     );
 }
+
+pub fn cpuSet(source: []align(2) const u8, destination: [*]align(2) const u8) void {
+    const Mode = packed struct {
+        half_word_count: u21,
+        _unused: u3 = 0,
+        fill: bool,
+        full_word: bool,
+        _unused2: u6 = 0,
+    };
+    const mode: Mode = .{
+        .half_word_count = @intCast(source.len),
+        .fill = false,
+        .full_word = false,
+    };
+    return asm volatile ("swi #0x0b"
+        :
+        : [source] "{r0}" (source.ptr),
+          [destination] "{r1}" (destination),
+          [mode] "{r2}" (mode),
+        : "r0", "r1", "r2", "r3"
+    );
+}

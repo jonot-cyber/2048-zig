@@ -104,3 +104,32 @@ pub fn slideDown(tiles: *const [16]?u32) struct { bool, [16]?WorkTile } {
 pub fn slideUp(tiles: *const [16]?u32) struct { bool, [16]?WorkTile } {
     return slideDir(tiles, &.{ 12, 8, 4, 0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3 });
 }
+
+/// Returns if the board is full, and no moves can be made
+pub fn detectLoss(tiles: *const [16]?u32) bool {
+    // If there are any empty spaces, return false.
+    for (tiles) |tile| {
+        if (tile == null) {
+            return false;
+        }
+    }
+    for (0..4) |iy| {
+        for (0..4) |ix| {
+            const idx = iy * 4 + ix;
+            // Check to the right
+            if (ix != 3) {
+                if (tiles[idx] == tiles[idx + 1]) {
+                    return false;
+                }
+            }
+
+            // Check below
+            if (iy != 3) {
+                if (tiles[idx] == tiles[idx + 4]) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}

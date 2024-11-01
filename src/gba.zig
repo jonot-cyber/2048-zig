@@ -1,3 +1,6 @@
+const bios = @import("bios.zig");
+const std = @import("std");
+
 /// Controls the display settings
 pub const reg_dispcnt: *volatile DispCnt = @ptrFromInt(0x04000000);
 /// Controls for the zeroth background
@@ -103,7 +106,7 @@ pub const VramOBJ = packed struct {
     _empty: u16,
 
     /// Sets a VRAM sprite to an in memory sprite
-    pub fn set(self: *VramOBJ, obj: OBJ) void {
+    pub noinline fn set(self: *VramOBJ, obj: OBJ) void {
         const tmp: VramOBJ = @bitCast(obj);
         self.attr0 = tmp.attr0;
         self.attr1 = tmp.attr1;
@@ -151,13 +154,9 @@ pub fn copyPalette(src: Palette, dst: *Palette) void {
 }
 
 /// Copy tiles from memory to VRAM.
-/// We need noinline to stop it from optimizing wrong.
-pub noinline fn copyTiles(src: []const Tile, dst: [*]Tile) void {
-    for (src, 0..) |t, i| {
-        for (t, 0..) |d, j| {
-            dst[i][j] = d;
-        }
-    }
+pub fn copyTiles(src: []const Tile, dst: [*]Tile) void {
+    const source = std.mem.sliceAsBytes(src);
+    bios.cpuSet(source, @ptrCast(dst));
 }
 
 /// Set the screen size of a background
