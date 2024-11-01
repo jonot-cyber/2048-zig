@@ -32,7 +32,7 @@ fn slideUnit(tile: u32, row: []const ?WorkTile) usize {
 
 fn slide(row: *const [4]?u32, from: *const [4]usize) struct { bool, [4]?WorkTile } {
     var moved = false;
-    var out: [4]?WorkTile = [1]?WorkTile{null} ** 3 ++ [1]?WorkTile{undefined};
+    var out: [4]?WorkTile = .{ null, null, null, null };
     if (row[3]) |r| {
         out[3] = .{
             .value = r,
