@@ -375,18 +375,20 @@ fn mainLoop(_tiles: [16]?u32) noreturn {
 }
 
 export fn main() noreturn {
+    gba.reg_dispcnt.forced_blank = true;
     gba.copyPalette(tiles_img.palette, &gba.obj_palettes[0]);
     gba.copyTiles(tiles_img.tiles[0..], gba.obj_tiles[0..]);
 
     gba.copyPalette(bg_img.palette, &gba.bg_palettes[0]);
     gba.copyTiles(bg_img.tiles[0..], gba.bg_tiles[0..]);
+    setupWinOrLose();
+    setupBackground();
     gba.reg_dispcnt.* = .{
         .character1d = true,
         .display_obj = true,
         .display_bg0 = true,
+        .forced_blank = false,
     };
-    setupWinOrLose();
-    setupBackground();
 
     var tiles: [16]?u32 = [1]?u32{null} ** 16;
     tile.addTile(&tiles, rand);
