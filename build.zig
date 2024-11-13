@@ -44,11 +44,27 @@ pub fn build(b: *std.Build) void {
     const gba_img_run_bg = b.addRunArtifact(gba_img);
     gba_img_run_bg.addFileArg(b.path("assets/bg.png"));
     const output_bg = gba_img_run_bg.addOutputFileArg("bg.zig");
-
     gba_img_run_bg.addArg("8");
     elf.root_module.addAnonymousImport("bg", .{
         .root_source_file = output_bg,
     });
+
+    const gba_img_run_winner = b.addRunArtifact(gba_img);
+    gba_img_run_winner.addFileArg(b.path("assets/winner.png"));
+    const output_winner = gba_img_run_winner.addOutputFileArg("winner.zig");
+    gba_img_run_winner.addArg("8");
+    elf.root_module.addAnonymousImport("winner", .{
+        .root_source_file = output_winner,
+    });
+
+    const gba_img_run_loser = b.addRunArtifact(gba_img);
+    gba_img_run_loser.addFileArg(b.path("assets/loser.png"));
+    const output_loser = gba_img_run_loser.addOutputFileArg("loser.zig");
+    gba_img_run_loser.addArg("8");
+    elf.root_module.addAnonymousImport("loser", .{
+        .root_source_file = output_loser,
+    });
+
     b.installArtifact(elf);
 
     _ = b.addInstallArtifact(elf, .{});

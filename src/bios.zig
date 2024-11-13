@@ -51,7 +51,7 @@ pub fn cpuSet(source: []align(2) const u8, destination: [*]align(2) const u8) vo
         _unused2: u6 = 0,
     };
     const mode: Mode = .{
-        .half_word_count = @intCast(source.len),
+        .half_word_count = @intCast(source.len / 2),
         .fill = false,
         .full_word = false,
     };

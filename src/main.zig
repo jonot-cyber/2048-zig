@@ -10,6 +10,9 @@ const tile = @import("tile.zig");
 const tiles_img = @import("tiles");
 const bg_img = @import("bg");
 
+const winner_img = @import("winner");
+const loser_img = @import("loser");
+
 const _alphabet_letters = alphabet.processLetters(alphabet.letters);
 const alphabet_letters_compressed align(4) = compress.rlCompress(@ptrCast(&_alphabet_letters), @sizeOf(@TypeOf(_alphabet_letters)));
 
@@ -189,6 +192,7 @@ fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
 }
 
 fn renderTiles(tiles: [16]?u32) void {
+    gba.hBlankWait();
     var idx: usize = 0;
     for (tiles, 0..) |t, i| {
         if (t) |til| {
@@ -198,6 +202,7 @@ fn renderTiles(tiles: [16]?u32) void {
                 .tile_number = @intCast(til * 16),
                 .x = @intCast(coords.x * 32 + x_offset),
                 .y = @intCast(coords.y * 32 + y_offset),
+                .priority = 1,
             });
             idx += 1;
         }
@@ -218,60 +223,126 @@ fn tilesFromWorkTiles(work_tiles: *const [16]?tile.WorkTile) [16]?u32 {
 }
 
 fn setupBackground() void {
+    const map_idx = 19;
     gba.reg_bg0cnt.* = .{
         .tile_data = 0,
-        .map_data = 1,
+        .map_data = map_idx,
         .screen_size = .size256x256,
+        .priority = 1,
     };
     const base_idx = 7 + 32 * 2;
     for (0..4) |y| {
         for (0..4) |x| {
-            gba.bg_map[1][base_idx + 0 + 4 * x + 32 * 4 * y].tile_number = 1;
-            gba.bg_map[1][base_idx + 1 + 4 * x + 32 * 4 * y].tile_number = 2;
-            gba.bg_map[1][base_idx + 2 + 4 * x + 32 * 4 * y].tile_number = 2;
-            gba.bg_map[1][base_idx + 3 + 4 * x + 32 * 4 * y].tile_number = 1;
-            gba.bg_map[1][base_idx + 3 + 4 * x + 32 * 4 * y].hflip = true;
+            gba.bg_map[map_idx][base_idx + 0 + 4 * x + 32 * 4 * y].tile_number = 1;
+            gba.bg_map[map_idx][base_idx + 1 + 4 * x + 32 * 4 * y].tile_number = 2;
+            gba.bg_map[map_idx][base_idx + 2 + 4 * x + 32 * 4 * y].tile_number = 2;
+            gba.bg_map[map_idx][base_idx + 3 + 4 * x + 32 * 4 * y].tile_number = 1;
+            gba.bg_map[map_idx][base_idx + 3 + 4 * x + 32 * 4 * y].hflip = true;
 
-            gba.bg_map[1][base_idx + 32 + 4 * x + 32 * 4 * y].tile_number = 3;
-            gba.bg_map[1][base_idx + 33 + 4 * x + 32 * 4 * y].tile_number = 4;
-            gba.bg_map[1][base_idx + 34 + 4 * x + 32 * 4 * y].tile_number = 4;
-            gba.bg_map[1][base_idx + 35 + 4 * x + 32 * 4 * y].tile_number = 3;
-            gba.bg_map[1][base_idx + 35 + 4 * x + 32 * 4 * y].hflip = true;
+            gba.bg_map[map_idx][base_idx + 32 + 4 * x + 32 * 4 * y].tile_number = 3;
+            gba.bg_map[map_idx][base_idx + 33 + 4 * x + 32 * 4 * y].tile_number = 4;
+            gba.bg_map[map_idx][base_idx + 34 + 4 * x + 32 * 4 * y].tile_number = 4;
+            gba.bg_map[map_idx][base_idx + 35 + 4 * x + 32 * 4 * y].tile_number = 3;
+            gba.bg_map[map_idx][base_idx + 35 + 4 * x + 32 * 4 * y].hflip = true;
 
-            gba.bg_map[1][base_idx + 64 + 4 * x + 32 * 4 * y].tile_number = 3;
-            gba.bg_map[1][base_idx + 65 + 4 * x + 32 * 4 * y].tile_number = 4;
-            gba.bg_map[1][base_idx + 66 + 4 * x + 32 * 4 * y].tile_number = 4;
-            gba.bg_map[1][base_idx + 67 + 4 * x + 32 * 4 * y].tile_number = 3;
-            gba.bg_map[1][base_idx + 67 + 4 * x + 32 * 4 * y].hflip = true;
+            gba.bg_map[map_idx][base_idx + 64 + 4 * x + 32 * 4 * y].tile_number = 3;
+            gba.bg_map[map_idx][base_idx + 65 + 4 * x + 32 * 4 * y].tile_number = 4;
+            gba.bg_map[map_idx][base_idx + 66 + 4 * x + 32 * 4 * y].tile_number = 4;
+            gba.bg_map[map_idx][base_idx + 67 + 4 * x + 32 * 4 * y].tile_number = 3;
+            gba.bg_map[map_idx][base_idx + 67 + 4 * x + 32 * 4 * y].hflip = true;
 
-            gba.bg_map[1][base_idx + 96 + 4 * x + 32 * 4 * y].tile_number = 1;
-            gba.bg_map[1][base_idx + 96 + 4 * x + 32 * 4 * y].vflip = true;
-            gba.bg_map[1][base_idx + 97 + 4 * x + 32 * 4 * y].tile_number = 2;
-            gba.bg_map[1][base_idx + 97 + 4 * x + 32 * 4 * y].vflip = true;
-            gba.bg_map[1][base_idx + 98 + 4 * x + 32 * 4 * y].tile_number = 2;
-            gba.bg_map[1][base_idx + 98 + 4 * x + 32 * 4 * y].vflip = true;
-            gba.bg_map[1][base_idx + 99 + 4 * x + 32 * 4 * y].tile_number = 1;
-            gba.bg_map[1][base_idx + 99 + 4 * x + 32 * 4 * y].vflip = true;
-            gba.bg_map[1][base_idx + 99 + 4 * x + 32 * 4 * y].hflip = true;
+            gba.bg_map[map_idx][base_idx + 96 + 4 * x + 32 * 4 * y].tile_number = 1;
+            gba.bg_map[map_idx][base_idx + 96 + 4 * x + 32 * 4 * y].vflip = true;
+            gba.bg_map[map_idx][base_idx + 97 + 4 * x + 32 * 4 * y].tile_number = 2;
+            gba.bg_map[map_idx][base_idx + 97 + 4 * x + 32 * 4 * y].vflip = true;
+            gba.bg_map[map_idx][base_idx + 98 + 4 * x + 32 * 4 * y].tile_number = 2;
+            gba.bg_map[map_idx][base_idx + 98 + 4 * x + 32 * 4 * y].vflip = true;
+            gba.bg_map[map_idx][base_idx + 99 + 4 * x + 32 * 4 * y].tile_number = 1;
+            gba.bg_map[map_idx][base_idx + 99 + 4 * x + 32 * 4 * y].vflip = true;
+            gba.bg_map[map_idx][base_idx + 99 + 4 * x + 32 * 4 * y].hflip = true;
         }
     }
 }
 
-export fn main() noreturn {
-    gba.copyPalette(tiles_img.palette, &gba.obj_palettes[0]);
-    gba.copyTiles(tiles_img.tiles[0..], gba.obj_tiles[0..]);
+fn setupWinOrLose() void {
+    // Winner tiles
+    gba.copyPalette(winner_img.palette, &gba.bg_palettes[1]);
+    gba.copyTiles(winner_img.tiles[0..], gba.bg_tiles[bg_img.tiles.len..]);
+    gba.copyPalette(loser_img.palette, &gba.bg_palettes[2]);
+    gba.copyTiles(loser_img.tiles[0..], gba.bg_tiles[bg_img.tiles.len + winner_img.tiles.len ..]);
 
-    gba.copyPalette(bg_img.palette, &gba.bg_palettes[0]);
-    gba.copyTiles(bg_img.tiles[0..], gba.bg_tiles[0..]);
-    gba.reg_dispcnt.* = .{
-        .character1d = true,
-        .display_obj = true,
-        .display_bg0 = true,
+    const winner_idx = 20;
+    for (0..gba.screen_height / 8) |y| {
+        for (0..gba.screen_width / 8) |x| {
+            gba.bg_map[winner_idx][y * 32 + x] = .{
+                .tile_number = @intCast(y * gba.screen_width / 8 + x + bg_img.tiles.len),
+                .palette = 1,
+            };
+        }
+    }
+
+    const loser_idx = 21;
+    for (0..gba.screen_height / 8) |y| {
+        for (0..gba.screen_width / 8) |x| {
+            gba.bg_map[loser_idx][y * 32 + x] = .{
+                .tile_number = @intCast(y * gba.screen_width / 8 + x + 93),
+                .palette = 2,
+            };
+        }
+    }
+}
+
+fn lose() noreturn {
+    gba.reg_bg1cnt.* = .{
+        .priority = 0,
+        .tile_data = 1,
+        .map_data = 21,
+        .screen_size = .size256x256,
     };
-    setupBackground();
+    gba.reg_dispcnt.display_bg1 = true;
+    while (true) {}
+}
 
-    var tiles: [16]?u32 = [1]?u32{null} ** 16;
-    tile.addTile(&tiles, rand);
+fn win(tiles: [16]?u32) noreturn {
+    // Wait a half second
+    for (0..30) |_| {
+        gba.hBlankWait();
+    }
+
+    gba.reg_bg1cnt.* = .{
+        .priority = 0,
+        .tile_data = 0,
+        .map_data = 20,
+        .screen_size = .size256x256,
+    };
+    gba.reg_dispcnt.display_bg1 = true;
+    gba.reg_bldcnt.* = .{
+        .first_bg1 = true,
+        .second_bg0 = true,
+        .second_obj = true,
+        .special_effect = .alpha,
+    };
+    var i: u32 = 0;
+    while (i <= 32) : (i += 1) {
+        gba.hBlankWait();
+        gba.reg_bldalpha.* = .{
+            .first_coefficient = @intCast(@divFloor(i, 2)),
+            .second_coefficient = @intCast(@divFloor(32 - i, 2)),
+        };
+    }
+    while (true) {
+        gba.hBlankWait();
+
+        const keys = gba.reg_keyinput.*;
+        if (!keys.start) {
+            gba.reg_dispcnt.display_bg1 = false;
+            mainLoop(tiles);
+        }
+    }
+}
+
+fn mainLoop(_tiles: [16]?u32) noreturn {
+    var tiles = _tiles;
     renderTiles(tiles);
     while (true) {
         gba.hBlankWait();
@@ -293,10 +364,31 @@ export fn main() noreturn {
                 tile.addTile(&tiles, rand);
                 renderTiles(tiles);
                 if (tile.detectLoss(&tiles)) {
-                    gba.reg_dispcnt.forced_blank = true;
-                    while (true) {}
+                    return lose();
+                }
+                if (try tile.detectWin(&tiles)) {
+                    return win(tiles);
                 }
             }
         }
     }
+}
+
+export fn main() noreturn {
+    gba.copyPalette(tiles_img.palette, &gba.obj_palettes[0]);
+    gba.copyTiles(tiles_img.tiles[0..], gba.obj_tiles[0..]);
+
+    gba.copyPalette(bg_img.palette, &gba.bg_palettes[0]);
+    gba.copyTiles(bg_img.tiles[0..], gba.bg_tiles[0..]);
+    gba.reg_dispcnt.* = .{
+        .character1d = true,
+        .display_obj = true,
+        .display_bg0 = true,
+    };
+    setupWinOrLose();
+    setupBackground();
+
+    var tiles: [16]?u32 = [1]?u32{null} ** 16;
+    tile.addTile(&tiles, rand);
+    return mainLoop(tiles);
 }

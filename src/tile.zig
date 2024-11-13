@@ -2,13 +2,25 @@ const std = @import("std");
 
 const Tiles = [16]?u32;
 
+/// Convert a tile number to it's value
+pub fn tileToValue(tile: u32) !u32 {
+    return std.math.powi(u32, 2, tile + 1);
+}
+
+/// Convert a value to a tile number
+pub fn valueToTile(value: u32) !u32 {
+    return std.math.log2_int(u32, value) - 1;
+}
+
 pub fn addTile(tiles: *[16]?u32, rand: std.rand.Random) void {
     const free_idx = blk: while (true) {
         const idx = rand.uintLessThan(usize, tiles.len);
         if (tiles[idx] == null)
             break :blk idx;
     };
-    tiles[free_idx] = if (rand.int(u2) == 0) 1 else 0;
+    const four_tile = try valueToTile(4);
+    const two_tile = try valueToTile(2);
+    tiles[free_idx] = if (rand.int(u2) == 0) four_tile else two_tile;
 }
 
 pub const WorkTile = struct {
@@ -132,4 +144,16 @@ pub fn detectLoss(tiles: *const [16]?u32) bool {
         }
     }
     return true;
+}
+
+/// Detect if a game has been won
+pub fn detectWin(tiles: *const [16]?u32) !bool {
+    const winning_tile = try valueToTile(2048);
+    for (tiles) |maybe_tile| {
+        if (maybe_tile) |tile| {
+            if (tile == winning_tile)
+                return true;
+        }
+    }
+    return false;
 }

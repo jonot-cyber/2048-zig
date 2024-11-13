@@ -15,6 +15,41 @@ pub const reg_bg3cnt: *volatile BgCnt = @ptrFromInt(0x0400000e);
 pub const reg_vcount: *volatile u16 = @ptrFromInt(0x04000006);
 /// The key inputs (pressed=false)
 pub const reg_keyinput: *volatile Keys = @ptrFromInt(0x04000130);
+/// Controls special effects
+pub const reg_bldcnt: *volatile BldCnt = @ptrFromInt(0x04000050);
+/// Controls alpha blending
+pub const reg_bldalpha: *volatile BldAlpha = @ptrFromInt(0x04000052);
+
+const SpecialEffect = enum(u2) {
+    none = 0,
+    alpha = 1,
+    brightness_increase = 2,
+    brightness_decrease = 3,
+};
+
+pub const BldCnt = packed struct {
+    first_bg0: bool = false,
+    first_bg1: bool = false,
+    first_bg2: bool = false,
+    first_bg3: bool = false,
+    first_obj: bool = false,
+    first_bd: bool = false,
+    special_effect: SpecialEffect,
+    second_bg0: bool = false,
+    second_bg1: bool = false,
+    second_bg2: bool = false,
+    second_bg3: bool = false,
+    second_obj: bool = false,
+    second_bd: bool = false,
+    _: u2 = 0,
+};
+
+pub const BldAlpha = packed struct {
+    first_coefficient: u5 = 0,
+    _: u3 = 0,
+    second_coefficient: u5 = 0,
+    _2: u3 = 0,
+};
 
 /// A 15-bit color value in a GBA format
 pub const Color = packed struct {
