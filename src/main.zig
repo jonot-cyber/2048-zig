@@ -168,13 +168,13 @@ fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
         }
     }
 
+    gba.hBlankWait();
     for (obj_i..128) |i| {
         gba.objs[i].set(gba.OBJ{
             .hidden = true,
         });
     }
     for (0..animation_speed) |_| {
-        gba.hBlankWait();
         processInput();
         for (&animate_tiles) |*animate_tile_maybe| {
             if (animate_tile_maybe.*) |*animate_tile| {
@@ -188,6 +188,7 @@ fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
                 animate_tile.y += animate_tile.speed_y;
             }
         }
+        gba.hBlankWait();
     }
 }
 
