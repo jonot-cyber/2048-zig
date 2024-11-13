@@ -336,6 +336,7 @@ fn win(tiles: [16]?u32) noreturn {
         const keys = gba.reg_keyinput.*;
         if (!keys.start) {
             gba.reg_dispcnt.display_bg1 = false;
+            already_won = true;
             mainLoop(tiles);
         }
     }
@@ -366,13 +367,16 @@ fn mainLoop(_tiles: [16]?u32) noreturn {
                 if (tile.detectLoss(&tiles)) {
                     return lose();
                 }
-                if (try tile.detectWin(&tiles)) {
+                if (!already_won and try tile.detectWin(&tiles)) {
                     return win(tiles);
                 }
             }
         }
     }
 }
+
+/// Whether the player has already won the game
+var already_won = false;
 
 export fn main() noreturn {
     gba.reg_dispcnt.forced_blank = true;
