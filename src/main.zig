@@ -1,9 +1,9 @@
 const std = @import("std");
 const builtin = @import("builtin");
 pub const gba = @import("gba.zig");
-const alphabet = @import("alphabet.zig");
 const bios = @import("bios.zig");
 const compress = @import("compress.zig");
+const alphabet = @import("alphabet.zig");
 
 const tile = @import("tile.zig");
 
@@ -13,75 +13,19 @@ const bg_img = @import("bg");
 const winner_img = @import("winner");
 const loser_img = @import("loser");
 
-const _alphabet_letters = alphabet.processLetters(alphabet.letters);
-const alphabet_letters_compressed align(4) = compress.rlCompress(@ptrCast(&_alphabet_letters), @sizeOf(@TypeOf(_alphabet_letters)));
-
-const Console = struct {
-    iy: u32 = 0,
-    ix: u32 = 0,
-
-    const Writer = std.io.Writer(*@This(), error{EndOfBuffer}, appendWrite);
-
-    pub fn init() @This() {
-        gba.reg_dispcnt.display_bg0 = true;
-        gba.copyPalette(.{
-            .{},
-            .{ .r = 31, .g = 31, .b = 31 },
-        } ++ [1]gba.Color{.{}} ** 14, &gba.bg_palettes[0]);
-        var alphabet_letters: [@sizeOf(@TypeOf(_alphabet_letters))]u8 = undefined;
-        bios.rlUncompReadNormalWrite8Bit(@ptrCast(&alphabet_letters_compressed), @ptrCast(&alphabet_letters));
-        bios.bitUnpack(@ptrCast(&alphabet_letters), @ptrCast(gba.bg_tiles[0..]), &.{
-            .zero_data = false,
-            .data_offset = 0,
-            .source_length = @sizeOf(@TypeOf(_alphabet_letters)),
-            .source_unit_width = 1,
-            .destination_unit_width = 4,
-        });
-        gba.reg_bg0cnt.map_data = 2;
-        return .{
-            .ix = 0,
-            .iy = 0,
-        };
-    }
-
-    fn appendWrite(self: *@This(), data: []const u8) error{EndOfBuffer}!usize {
-        const i = self.iy * gba.screen_width + self.ix;
-        if (i + data.len > gba.screen_width * gba.screen_height / 64) {
-            return error.EndOfBuffer;
-        }
-        for (data) |d| {
-            gba.bg_map[2][self.iy * 32 + self.ix].tile_number = d;
-            self.ix += 1;
-            if (self.ix >= gba.screen_width / 8) {
-                self.ix = 0;
-                self.iy += 1;
-            }
-        }
-        return data.len;
-    }
-
-    pub fn clear(self: *@This()) void {
-        for (0..gba.screen_height / 8) |y| {
-            for (0..gba.screen_width / 8) |x| {
-                gba.bg_map[2][y * 32 + x].tile_number = 0;
-            }
-        }
-        self.ix = 0;
-        self.iy = 0;
-    }
-
-    pub fn writer(self: *@This()) @This().Writer {
-        return .{ .context = self };
-    }
-};
-
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size: ?usize) noreturn {
     @setCold(true);
     if (builtin.mode == .ReleaseSmall or builtin.mode == .ReleaseFast) {
         while (true) {}
     }
 
-    var w = Console.init();
+    var tiles_buf = std.mem.zeroes([4 * gba.screen_width / 8]gba.Tile);
+    var w = alphabet.GlyphWriter{
+        .surface = alphabet.Surface{
+            .tiles = &tiles_buf,
+            .pitch = gba.screen_width / 8,
+        },
+    };
     _ = w.writer().print("PANIC: {s}\\", .{msg}) catch unreachable;
 
     var it = std.debug.StackIterator.init(@returnAddress(), null);
@@ -90,8 +34,110 @@ pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size
     }
     _ = error_return_trace;
     _ = size;
+    gba.copyPalette([16]gba.Color{
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 31, .g = 31, .b = 31 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+        gba.Color{ .r = 0, .g = 0, .b = 0 },
+    }, &gba.bg_palettes[0]);
+    gba.copyTiles(&tiles_buf, gba.bg_tiles[1..]);
+    gba.reg_dispcnt.* = .{
+        .display_bg0 = true,
+    };
+    gba.reg_bg0cnt.* = .{
+        .tile_data = 0,
+        .map_data = 31,
+    };
+    for (0..4) |iy| {
+        for (0..gba.screen_width / 8) |ix| {
+            gba.bg_map[31][iy * 32 + ix] = .{
+                .tile_number = @intCast(iy * gba.screen_width / 8 + ix + 1),
+                .palette = 0,
+            };
+        }
+    }
     while (true) {}
 }
+
+const score_display = struct {
+    var tiles_buf = std.mem.zeroes([30]gba.Tile);
+    var gw = alphabet.GlyphWriter{
+        .surface = alphabet.Surface{
+            .tiles = &tiles_buf,
+            .pitch = 30,
+        },
+        .cursor_y = 1,
+        .cursor_x = 1,
+    };
+
+    var score: u32 = 0;
+
+    fn setup() void {
+        gba.reg_dispcnt.display_bg2 = true;
+        gba.copyPalette([16]gba.Color{
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 14, .g = 13, .b = 12 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+            gba.Color{ .r = 0, .g = 0, .b = 0 },
+        }, &gba.bg_palettes[3]);
+
+        gba.reg_bg2cnt.* = .{
+            .priority = 1,
+            .tile_data = 2,
+            .map_data = 22,
+        };
+
+        for (&gba.bg_map[22]) |*i| {
+            i.* = .{
+                .tile_number = 448,
+                .palette = 3,
+            };
+        }
+
+        for (0..30) |i| {
+            gba.bg_map[22][32 * 18 + i] = .{
+                .tile_number = @intCast(449 + i),
+                .palette = 3,
+            };
+        }
+    }
+
+    fn drawScore() !void {
+        // Make sure you only call this during v-blank
+        // Clear the memory region
+        const empty_tile: gba.Tile = [1]u32{0} ** 8;
+        @memset(&@This().tiles_buf, empty_tile);
+        @This().gw.cursor_y = 1;
+        @This().gw.cursor_x = 1;
+
+        _ = try @This().gw.writer().print("Score: {d}", .{@This().score});
+        gba.copyTiles(&@This().tiles_buf, gba.bg_tiles[512 * 2 + 449 ..]);
+    }
+};
 
 const x_offset = gba.screen_width / 2 - 32 * 2;
 const y_offset = gba.screen_height / 2 - 32 * 2;
@@ -133,7 +179,7 @@ fn processInput() void {
     last_input = keys;
 }
 
-const animation_speed = 8;
+const animation_speed = 4;
 fn animateTiles(work_tiles: *const [16]?tile.WorkTile) void {
     const AnimateTile = struct {
         i: usize,
@@ -223,13 +269,25 @@ fn tilesFromWorkTiles(work_tiles: *const [16]?tile.WorkTile) [16]?u32 {
     return ret;
 }
 
+fn workTilesPoints(work_tiles: *const [16]?tile.WorkTile) !u32 {
+    var ret: u32 = 0;
+    for (work_tiles) |work_tile_maybe| {
+        if (work_tile_maybe) |work_tile| {
+            if (work_tile.merged) {
+                ret += try tile.tileToValue(work_tile.value);
+            }
+        }
+    }
+    return ret;
+}
+
 fn setupBackground() void {
     const map_idx = 19;
     gba.reg_bg0cnt.* = .{
         .tile_data = 0,
         .map_data = map_idx,
         .screen_size = .size256x256,
-        .priority = 1,
+        .priority = 2,
     };
     const base_idx = 7 + 32 * 2;
     for (0..4) |y| {
@@ -265,11 +323,14 @@ fn setupBackground() void {
     }
 }
 
+const winner_palette_compressed align(4) = compress.rlCompress(@ptrCast(&winner_img.palette), @sizeOf(@TypeOf(winner_img.palette)));
+const loser_palette_compressed align(4) = compress.rlCompress(@ptrCast(&loser_img.palette), @sizeOf(@TypeOf(loser_img.palette)));
+const winner_tiles_compressed align(4) = compress.rlCompress(@ptrCast(&winner_img.tiles), @sizeOf(@TypeOf(winner_img.tiles)));
+const loser_tiles_compressed align(4) = compress.rlCompress(@ptrCast(&loser_img.tiles), @sizeOf(@TypeOf(loser_img.tiles)));
 fn setupWinOrLose() void {
-    // Winner tiles
     gba.copyPalette(winner_img.palette, &gba.bg_palettes[1]);
-    gba.copyTiles(winner_img.tiles[0..], gba.bg_tiles[bg_img.tiles.len..]);
     gba.copyPalette(loser_img.palette, &gba.bg_palettes[2]);
+    gba.copyTiles(winner_img.tiles[0..], gba.bg_tiles[bg_img.tiles.len..]);
     gba.copyTiles(loser_img.tiles[0..], gba.bg_tiles[bg_img.tiles.len + winner_img.tiles.len ..]);
 
     const winner_idx = 20;
@@ -361,6 +422,8 @@ fn mainLoop(_tiles: [16]?u32) noreturn {
         if (res) |v| {
             // Movement
             if (v[0]) {
+                score_display.score += workTilesPoints(&v[1]) catch unreachable;
+                score_display.drawScore() catch unreachable;
                 animateTiles(&v[1]);
                 tiles = tilesFromWorkTiles(&v[1]);
                 tile.addTile(&tiles, rand);
@@ -379,10 +442,11 @@ fn mainLoop(_tiles: [16]?u32) noreturn {
 /// Whether the player has already won the game
 var already_won = false;
 
+const tiles_tiles_compressed align(4) = compress.rlCompress(@ptrCast(&tiles_img.tiles), @sizeOf(@TypeOf(tiles_img.tiles)));
 export fn main() noreturn {
     gba.reg_dispcnt.forced_blank = true;
     gba.copyPalette(tiles_img.palette, &gba.obj_palettes[0]);
-    gba.copyTiles(tiles_img.tiles[0..], gba.obj_tiles[0..]);
+    bios.rlUncompReadNormalWrite16Bit(&tiles_tiles_compressed, @ptrCast(&gba.obj_tiles[0]));
 
     gba.copyPalette(bg_img.palette, &gba.bg_palettes[0]);
     gba.copyTiles(bg_img.tiles[0..], gba.bg_tiles[0..]);
@@ -394,6 +458,8 @@ export fn main() noreturn {
         .display_bg0 = true,
         .forced_blank = false,
     };
+    score_display.setup();
+    score_display.drawScore() catch unreachable;
 
     var tiles: [16]?u32 = [1]?u32{null} ** 16;
     tile.addTile(&tiles, rand);

@@ -11,7 +11,7 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
     });
 
-    const target2 = b.resolveTargetQuery(.{
+    const target = b.resolveTargetQuery(.{
         .cpu_arch = .thumb,
         .cpu_model = .{
             .explicit = &std.Target.arm.cpu.arm7tdmi,
@@ -19,10 +19,11 @@ pub fn build(b: *std.Build) void {
         .os_tag = .freestanding,
         .abi = .eabi,
     });
+
     const elf = b.addExecutable(.{
         .name = "zig.elf",
         .root_source_file = b.path("src/main.zig"),
-        .target = target2,
+        .target = target,
         .optimize = optimize,
         .single_threaded = true,
         .link_libc = false,
@@ -66,8 +67,6 @@ pub fn build(b: *std.Build) void {
     });
 
     b.installArtifact(elf);
-
-    _ = b.addInstallArtifact(elf, .{});
 
     const obj_copy = b.addObjCopy(elf.getEmittedBin(), .{
         .format = .bin,

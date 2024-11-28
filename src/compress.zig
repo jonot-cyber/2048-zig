@@ -3,7 +3,7 @@
 /// Get the size of data after being compressed with Run-Length encoding
 fn rlCompressSize(comptime data: [*]const u8, comptime size: usize) comptime_int {
     // Allows the function to compress
-    @setEvalBranchQuota(size * 20);
+    @setEvalBranchQuota(size * 100);
 
     // The size returned
     var ret = 0;
@@ -70,7 +70,7 @@ pub fn rlCompress(comptime data: [*]const u8, comptime size: usize) [rlCompressS
     @memcpy(ret[0..4], src);
 
     // Make sure there is enough room for the function to compile;
-    @setEvalBranchQuota(ret.len * 20);
+    @setEvalBranchQuota(ret.len * 100);
 
     var i = 0; // Index into data
     var block_size = 0; // The size of the current block
