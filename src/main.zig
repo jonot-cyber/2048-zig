@@ -354,6 +354,15 @@ fn setupWinOrLose() void {
     }
 }
 
+fn newGame(rng_rand: std.rand.Random) noreturn {
+    already_won = false;
+    score_display.score = 0;
+    score_display.drawScore() catch unreachable;
+    var new_tiles: [16]?u32 = [1]?u32{null} ** 16;
+    tile.addTile(&new_tiles, rng_rand);
+    mainLoop(new_tiles);
+}
+
 fn lose() noreturn {
     // Wait a half second
     for (0..30) |_| {
@@ -388,12 +397,7 @@ fn lose() noreturn {
         const keys = gba.reg_keyinput.*;
         if (!keys.start) {
             gba.reg_dispcnt.display_bg1 = false;
-            already_won = false;
-            score_display.score = 0;
-            score_display.drawScore() catch unreachable;
-            var new_tiles: [16]?u32 = [1]?u32{null} ** 16;
-            tile.addTile(&new_tiles, rand);
-            mainLoop(new_tiles);
+            newGame(rand);
         }
     }
 }
@@ -476,12 +480,7 @@ fn win(tiles: [16]?u32) noreturn {
                     mainLoop(tiles);
                 },
                 .start_over => {
-                    already_won = false;
-                    score_display.score = 0;
-                    score_display.drawScore() catch unreachable;
-                    var new_tiles: [16]?u32 = [1]?u32{null} ** 16;
-                    tile.addTile(&new_tiles, rand);
-                    mainLoop(new_tiles);
+                    newGame(rand);
                 },
             }
         } else if (menu_changed) {
@@ -547,24 +546,5 @@ export fn main() noreturn {
     score_display.setup();
     score_display.drawScore() catch unreachable;
 
-    var tiles: [16]?u32 = [1]?u32{null} ** 16;
-    // Lose placeholder
-    tiles[0] = tile.valueToTile(2) catch unreachable;
-    tiles[1] = tile.valueToTile(4) catch unreachable;
-    tiles[2] = tile.valueToTile(2) catch unreachable;
-    tiles[3] = tile.valueToTile(4) catch unreachable;
-    tiles[4] = tile.valueToTile(4) catch unreachable;
-    tiles[5] = tile.valueToTile(2) catch unreachable;
-    tiles[6] = tile.valueToTile(4) catch unreachable;
-    tiles[7] = tile.valueToTile(2) catch unreachable;
-    tiles[8] = tile.valueToTile(2) catch unreachable;
-    tiles[9] = tile.valueToTile(4) catch unreachable;
-    tiles[10] = tile.valueToTile(2) catch unreachable;
-    tiles[11] = tile.valueToTile(4) catch unreachable;
-    tiles[12] = tile.valueToTile(4) catch unreachable;
-    tiles[13] = tile.valueToTile(2) catch unreachable;
-    tiles[15] = tile.valueToTile(4) catch unreachable;
-
-    // tile.addTile(&tiles, rand);
-    return mainLoop(tiles);
+    return newGame(rand);
 }
