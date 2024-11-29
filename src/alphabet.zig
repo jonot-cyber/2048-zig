@@ -34,14 +34,14 @@ pub const Surface = struct {
         tile[inner_y] |= @as(u32, color) << (4 * inner_x);
     }
 
-    pub fn drawGlyph(self: @This(), y: usize, x: usize, glyph: Glyph) void {
+    pub fn drawGlyph(self: @This(), y: usize, x: usize, glyph: Glyph, color: u4) void {
         for (0..glyph.height) |iy| {
             for (0..glyph.width) |ix| {
                 const pixel = glyph.data[iy * glyph.width + ix];
                 if (pixel == 0) {
                     continue;
                 }
-                self.drawPixel(y + iy, x + ix, 1);
+                self.drawPixel(y + iy, x + ix, color);
             }
         }
     }
@@ -908,6 +908,7 @@ pub const GlyphWriter = struct {
     surface: Surface,
     cursor_y: usize = 0,
     cursor_x: usize = 0,
+    color: u4 = 1,
 
     const Writer = std.io.Writer(
         *GlyphWriter,
@@ -917,6 +918,12 @@ pub const GlyphWriter = struct {
 
     fn appendWrite(self: *GlyphWriter, data: []const u8) error{EndOfBuffer}!usize {
         for (data) |char| {
+            if (char == '\n') {
+                // TODO: This assumes constant glyph height.
+                self.cursor_y += glyph_data['a' - 32].height + 1;
+                self.cursor_x = 0;
+                continue;
+            }
             if (char < 32 or char > 126) {
                 continue;
             }
@@ -932,7 +939,7 @@ pub const GlyphWriter = struct {
                     break :blk self.cursor_x + glyph.width + 1;
                 }
             };
-            self.surface.drawGlyph(self.cursor_y, self.cursor_x, glyph);
+            self.surface.drawGlyph(self.cursor_y, self.cursor_x, glyph, self.color);
             self.cursor_x = new_cursor_x;
         }
         return data.len;

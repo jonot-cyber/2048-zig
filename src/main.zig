@@ -355,6 +355,11 @@ fn setupWinOrLose() void {
 }
 
 fn lose() noreturn {
+    // Wait a half second
+    for (0..30) |_| {
+        gba.hBlankWait();
+    }
+
     gba.reg_bg1cnt.* = .{
         .priority = 0,
         .tile_data = 1,
@@ -362,7 +367,59 @@ fn lose() noreturn {
         .screen_size = .size256x256,
     };
     gba.reg_dispcnt.display_bg1 = true;
-    while (true) {}
+    gba.reg_bldcnt.* = .{
+        .first_bg1 = true,
+        .second_bg0 = true,
+        .second_bg2 = true,
+        .second_obj = true,
+        .special_effect = .alpha,
+    };
+    var i: u32 = 0;
+    while (i <= 32) : (i += 1) {
+        gba.hBlankWait();
+        gba.reg_bldalpha.* = .{
+            .first_coefficient = @intCast(@divFloor(i, 2)),
+            .second_coefficient = @intCast(@divFloor(32 - i, 2)),
+        };
+    }
+    while (true) {
+        gba.hBlankWait();
+
+        const keys = gba.reg_keyinput.*;
+        if (!keys.start) {
+            gba.reg_dispcnt.display_bg1 = false;
+            already_won = false;
+            score_display.score = 0;
+            score_display.drawScore() catch unreachable;
+            var new_tiles: [16]?u32 = [1]?u32{null} ** 16;
+            tile.addTile(&new_tiles, rand);
+            mainLoop(new_tiles);
+        }
+    }
+}
+
+const WinMenuSelection = enum {
+    continue_game,
+    start_over,
+};
+
+fn drawWinMenu(selection: WinMenuSelection) !void {
+    var tiles_buf: [16]gba.Tile = undefined;
+    @memset(&tiles_buf, [1]u32{0x11111111} ** 8);
+    var gw = alphabet.GlyphWriter{
+        .surface = alphabet.Surface{
+            .tiles = &tiles_buf,
+            .pitch = 8,
+        },
+        .color = 3,
+    };
+    const menu_text = switch (selection) {
+        .continue_game => "> Continue\nStart over",
+        .start_over => "Continue\n> Start Over",
+    };
+    try gw.writer().writeAll(menu_text);
+    gba.copyTiles(tiles_buf[0..8], gba.bg_tiles[396 .. 396 + 8]);
+    gba.copyTiles(tiles_buf[8..16], gba.bg_tiles[426 .. 426 + 8]);
 }
 
 fn win(tiles: [16]?u32) noreturn {
@@ -381,6 +438,7 @@ fn win(tiles: [16]?u32) noreturn {
     gba.reg_bldcnt.* = .{
         .first_bg1 = true,
         .second_bg0 = true,
+        .second_bg2 = true,
         .second_obj = true,
         .special_effect = .alpha,
     };
@@ -392,14 +450,42 @@ fn win(tiles: [16]?u32) noreturn {
             .second_coefficient = @intCast(@divFloor(32 - i, 2)),
         };
     }
+
+    var menu_selection = WinMenuSelection.continue_game;
+
+    drawWinMenu(menu_selection) catch unreachable;
+
     while (true) {
         gba.hBlankWait();
 
         const keys = gba.reg_keyinput.*;
+        var menu_changed = false;
+        if (!keys.down and menu_selection == .continue_game) {
+            menu_selection = .start_over;
+            menu_changed = true;
+        }
+        if (!keys.up and menu_selection == .start_over) {
+            menu_selection = .continue_game;
+            menu_changed = true;
+        }
         if (!keys.start) {
             gba.reg_dispcnt.display_bg1 = false;
-            already_won = true;
-            mainLoop(tiles);
+            switch (menu_selection) {
+                .continue_game => {
+                    already_won = true;
+                    mainLoop(tiles);
+                },
+                .start_over => {
+                    already_won = false;
+                    score_display.score = 0;
+                    score_display.drawScore() catch unreachable;
+                    var new_tiles: [16]?u32 = [1]?u32{null} ** 16;
+                    tile.addTile(&new_tiles, rand);
+                    mainLoop(new_tiles);
+                },
+            }
+        } else if (menu_changed) {
+            drawWinMenu(menu_selection) catch unreachable;
         }
     }
 }
@@ -462,6 +548,23 @@ export fn main() noreturn {
     score_display.drawScore() catch unreachable;
 
     var tiles: [16]?u32 = [1]?u32{null} ** 16;
-    tile.addTile(&tiles, rand);
+    // Lose placeholder
+    tiles[0] = tile.valueToTile(2) catch unreachable;
+    tiles[1] = tile.valueToTile(4) catch unreachable;
+    tiles[2] = tile.valueToTile(2) catch unreachable;
+    tiles[3] = tile.valueToTile(4) catch unreachable;
+    tiles[4] = tile.valueToTile(4) catch unreachable;
+    tiles[5] = tile.valueToTile(2) catch unreachable;
+    tiles[6] = tile.valueToTile(4) catch unreachable;
+    tiles[7] = tile.valueToTile(2) catch unreachable;
+    tiles[8] = tile.valueToTile(2) catch unreachable;
+    tiles[9] = tile.valueToTile(4) catch unreachable;
+    tiles[10] = tile.valueToTile(2) catch unreachable;
+    tiles[11] = tile.valueToTile(4) catch unreachable;
+    tiles[12] = tile.valueToTile(4) catch unreachable;
+    tiles[13] = tile.valueToTile(2) catch unreachable;
+    tiles[15] = tile.valueToTile(4) catch unreachable;
+
+    // tile.addTile(&tiles, rand);
     return mainLoop(tiles);
 }
