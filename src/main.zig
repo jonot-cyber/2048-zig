@@ -409,7 +409,7 @@ fn lose() noreturn {
         gba.hBlankWait();
 
         const keys = gba.reg_keyinput.*;
-        if (!keys.start) {
+        if (!keys.start or !keys.a) {
             gba.reg_dispcnt.display_bg1 = false;
             newGame(rand);
         }
@@ -486,7 +486,7 @@ fn win(tiles: [16]?u32) noreturn {
             menu_selection = .continue_game;
             menu_changed = true;
         }
-        if (!keys.start) {
+        if (!keys.start or !keys.a) {
             gba.reg_dispcnt.display_bg1 = false;
             switch (menu_selection) {
                 .continue_game => {
