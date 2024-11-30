@@ -1,3 +1,4 @@
 .zig_cache/*
+zig-cache/*
 zig-out/*
-/.zig-cache/
+.direnv/*

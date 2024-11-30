@@ -19,6 +19,106 @@ pub const reg_keyinput: *volatile Keys = @ptrFromInt(0x04000130);
 pub const reg_bldcnt: *volatile BldCnt = @ptrFromInt(0x04000050);
 /// Controls alpha blending
 pub const reg_bldalpha: *volatile BldAlpha = @ptrFromInt(0x04000052);
+/// Controls access to the game pak
+pub const reg_waitcnt: *volatile WaitCnt = @ptrFromInt(0x04000204);
+
+// DMA
+pub const reg_dma0sad: *volatile *const u8 = @ptrFromInt(0x040000b0);
+pub const reg_dma1sad: *volatile *const u8 = @ptrFromInt(0x040000bc);
+pub const reg_dma2sad: *volatile *const u8 = @ptrFromInt(0x040000c8);
+pub const reg_dma3sad: *volatile *const u8 = @ptrFromInt(0x040000d4);
+
+pub const reg_dma0dad: *volatile *u8 = @ptrFromInt(0x040000b4);
+pub const reg_dma1dad: *volatile *u8 = @ptrFromInt(0x040000c0);
+pub const reg_dma2dad: *volatile *u8 = @ptrFromInt(0x040000cc);
+pub const reg_dma3dad: *volatile *u8 = @ptrFromInt(0x040000d8);
+
+// Word count
+pub const reg_dma0cnt_l: *volatile usize = @ptrFromInt(0x040000b8);
+pub const reg_dma1cnt_l: *volatile usize = @ptrFromInt(0x040000c4);
+pub const reg_dma2cnt_l: *volatile usize = @ptrFromInt(0x040000d0);
+pub const reg_dma3cnt_l: *volatile usize = @ptrFromInt(0x040000dc);
+
+pub const reg_dma0cnt_h: *volatile DmaCnt = @ptrFromInt(0x040000ba);
+pub const reg_dma1cnt_h: *volatile DmaCnt = @ptrFromInt(0x040000c6);
+pub const reg_dma2cnt_h: *volatile DmaCnt = @ptrFromInt(0x040000d2);
+pub const reg_dma3cnt_h: *volatile DmaCnt = @ptrFromInt(0x040000de);
+
+const DestAddrControl = enum(u2) {
+    increment = 0,
+    decrement = 1,
+    fixed = 2,
+    increment_reload = 3,
+};
+
+const SourceAddrControl = enum(u2) {
+    increment = 0,
+    decrement = 1,
+    fixed = 2,
+    prohibited = 3,
+};
+
+const DmaStartTiming = enum(u2) {
+    immediate = 0,
+    v_blank = 1,
+    h_blank = 2,
+    special = 3,
+};
+
+const WaitCntCycles = enum(u2) {
+    cycle_4 = 0,
+    cycle_3 = 1,
+    cycle_2 = 2,
+    cycle_8 = 3,
+};
+
+const WaitCntCycles2 = enum(u1) {
+    cycle_2 = 0,
+    cycle_1 = 1,
+};
+
+const WaitCntCycles3 = enum(u1) {
+    cycle_4 = 0,
+    cycle_1 = 1,
+};
+
+const WaitCntCycles4 = enum(u1) {
+    cycle_8 = 0,
+    cycle_1 = 1,
+};
+
+const PhiTerminalOutput = enum(u2) {
+    disable = 0,
+    mhz_4_19 = 1,
+    mhz_8_38 = 2,
+    mhz_16_78 = 3,
+};
+
+pub const WaitCnt = packed struct {
+    sram_wait_control: WaitCntCycles,
+    wait_state_0_first_access: WaitCntCycles,
+    wait_state_0_second_access: WaitCntCycles2,
+    wait_state_1_first_access: WaitCntCycles,
+    wait_state_1_second_access: WaitCntCycles3,
+    wait_state_2_first_access: WaitCntCycles,
+    wait_state_2_second_access: WaitCntCycles4,
+    phi_terminal_output: PhiTerminalOutput,
+    _unused: u1 = 0,
+    prefetch_buffer: bool,
+    game_boy: bool = 0,
+};
+
+pub const DmaCnt = packed struct {
+    _unused: u5 = 0,
+    dest_addr_control: DestAddrControl,
+    source_addr_control: SourceAddrControl,
+    repeat: bool,
+    transfer_32bit: bool,
+    game_pak_drq: bool,
+    dma_start_timing: DmaStartTiming,
+    irq: bool,
+    enable: bool,
+};
 
 const SpecialEffect = enum(u2) {
     none = 0,

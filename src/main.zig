@@ -1,10 +1,11 @@
 const std = @import("std");
 const builtin = @import("builtin");
 pub const gba = @import("gba.zig");
+
+const alphabet = @import("alphabet.zig");
 const bios = @import("bios.zig");
 const compress = @import("compress.zig");
-const alphabet = @import("alphabet.zig");
-
+const save = @import("save.zig");
 const tile = @import("tile.zig");
 
 const tiles_img = @import("tiles");
@@ -83,8 +84,13 @@ const score_display = struct {
     };
 
     var score: u32 = 0;
+    var high_score: u32 = undefined;
 
     fn setup() void {
+        save.init();
+
+        @This().high_score = save.getScore() orelse 0;
+
         gba.reg_dispcnt.display_bg2 = true;
         gba.copyPalette([16]gba.Color{
             gba.Color{ .r = 0, .g = 0, .b = 0 },
@@ -126,6 +132,14 @@ const score_display = struct {
         }
     }
 
+    fn setScore(new_score: u32) void {
+        @This().score = new_score;
+        if (new_score > @This().high_score) {
+            @This().high_score = new_score;
+            save.setScore(new_score);
+        }
+    }
+
     fn drawScore() !void {
         // Make sure you only call this during v-blank
         // Clear the memory region
@@ -134,7 +148,7 @@ const score_display = struct {
         @This().gw.cursor_y = 1;
         @This().gw.cursor_x = 1;
 
-        _ = try @This().gw.writer().print("Score: {d}", .{@This().score});
+        _ = try @This().gw.writer().print("Score: {d} - High Score: {d}", .{ @This().score, @This().high_score });
         gba.copyTiles(&@This().tiles_buf, gba.bg_tiles[512 * 2 + 449 ..]);
     }
 };
@@ -356,7 +370,7 @@ fn setupWinOrLose() void {
 
 fn newGame(rng_rand: std.rand.Random) noreturn {
     already_won = false;
-    score_display.score = 0;
+    score_display.setScore(0);
     score_display.drawScore() catch unreachable;
     var new_tiles: [16]?u32 = [1]?u32{null} ** 16;
     tile.addTile(&new_tiles, rng_rand);
@@ -507,7 +521,7 @@ fn mainLoop(_tiles: [16]?u32) noreturn {
         if (res) |v| {
             // Movement
             if (v[0]) {
-                score_display.score += workTilesPoints(&v[1]) catch unreachable;
+                score_display.setScore(score_display.score + (workTilesPoints(&v[1]) catch unreachable));
                 score_display.drawScore() catch unreachable;
                 animateTiles(&v[1]);
                 tiles = tilesFromWorkTiles(&v[1]);
@@ -543,6 +557,7 @@ export fn main() noreturn {
         .display_bg0 = true,
         .forced_blank = false,
     };
+
     score_display.setup();
     score_display.drawScore() catch unreachable;
 
