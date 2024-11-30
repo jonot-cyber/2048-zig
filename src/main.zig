@@ -342,10 +342,10 @@ const loser_palette_compressed align(4) = compress.rlCompress(@ptrCast(&loser_im
 const winner_tiles_compressed align(4) = compress.rlCompress(@ptrCast(&winner_img.tiles), @sizeOf(@TypeOf(winner_img.tiles)));
 const loser_tiles_compressed align(4) = compress.rlCompress(@ptrCast(&loser_img.tiles), @sizeOf(@TypeOf(loser_img.tiles)));
 fn setupWinOrLose() void {
-    gba.copyPalette(winner_img.palette, &gba.bg_palettes[1]);
-    gba.copyPalette(loser_img.palette, &gba.bg_palettes[2]);
-    gba.copyTiles(winner_img.tiles[0..], gba.bg_tiles[bg_img.tiles.len..]);
-    gba.copyTiles(loser_img.tiles[0..], gba.bg_tiles[bg_img.tiles.len + winner_img.tiles.len ..]);
+    bios.rlUncompReadNormalWrite16Bit(&winner_palette_compressed, @ptrCast(&gba.bg_palettes[1]));
+    bios.rlUncompReadNormalWrite16Bit(&loser_palette_compressed, @ptrCast(&gba.bg_palettes[2]));
+    bios.rlUncompReadNormalWrite16Bit(&winner_tiles_compressed, @ptrCast(&gba.bg_tiles[bg_img.tiles.len]));
+    bios.rlUncompReadNormalWrite16Bit(&loser_tiles_compressed, @ptrCast(&gba.bg_tiles[bg_img.tiles.len + winner_img.tiles.len]));
 
     const winner_idx = 20;
     for (0..gba.screen_height / 8) |y| {
