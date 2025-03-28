@@ -1,15 +1,25 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
+    const host_target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+
+    const zig_img = b.dependency("zigimg", .{
+        .target = host_target,
+        .optimize = optimize,
+    });
 
     const gba_img = b.addExecutable(.{
         .name = "gbaimg",
-        .root_source_file = b.path("tools/gbaimg.zig"),
-        .optimize = optimize,
-        .target = b.standardTargetOptions(.{}),
-        .link_libc = true,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/gbaimg.zig"),
+            .target = host_target,
+            .optimize = optimize,
+            .link_libc = true,
+        }),
     });
+
+    gba_img.root_module.addImport("zigimg", zig_img.module("zigimg"));
 
     const target = b.resolveTargetQuery(.{
         .cpu_arch = .thumb,
@@ -22,14 +32,16 @@ pub fn build(b: *std.Build) void {
 
     const elf = b.addExecutable(.{
         .name = "zig.elf",
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
-        .single_threaded = true,
-        .link_libc = false,
         .linkage = .static,
-        .omit_frame_pointer = optimize == .ReleaseSmall,
         .use_lld = true,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .target = target,
+            .optimize = optimize,
+            .single_threaded = true,
+            .link_libc = false,
+            .omit_frame_pointer = optimize == .ReleaseSmall,
+        }),
     });
     elf.addAssemblyFile(b.path("src/start.s"));
     elf.setLinkerScript(b.path("src/link.ld"));

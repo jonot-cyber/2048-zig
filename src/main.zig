@@ -15,7 +15,7 @@ const winner_img = @import("winner");
 const loser_img = @import("loser");
 
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, size: ?usize) noreturn {
-    @setCold(true);
+    @branchHint(.cold);
     if (builtin.mode == .ReleaseSmall or builtin.mode == .ReleaseFast) {
         while (true) {}
     }
@@ -156,7 +156,7 @@ const score_display = struct {
 const x_offset = gba.screen_width / 2 - 32 * 2;
 const y_offset = gba.screen_height / 2 - 32 * 2;
 
-var rng = std.rand.DefaultPrng.init(0);
+var rng = std.Random.DefaultPrng.init(0);
 var rand = rng.random();
 
 var last_input: gba.Keys = .{};
@@ -368,7 +368,7 @@ fn setupWinOrLose() void {
     }
 }
 
-fn newGame(rng_rand: std.rand.Random) noreturn {
+fn newGame(rng_rand: std.Random) noreturn {
     already_won = false;
     score_display.setScore(0);
     score_display.drawScore() catch unreachable;

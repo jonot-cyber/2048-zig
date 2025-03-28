@@ -1,0 +1,12 @@
+.{
+    .name = .zig_2048,
+    .version = "1.0.0",
+    .fingerprint = 0x44fa22caf6e1d67,
+    .dependencies = .{
+        .zigimg = .{
+            .url = "git+https://github.com/zigimg/zigimg#31268548fe3276c0e95f318a6c0d2ab10565b58d",
+            .hash = "zigimg-0.1.0-lly-O6N2EABOxke8dqyzCwhtUCAafqP35zC7wsZ4Ddxj",
+        },
+    },
+    .paths = .{""},
+}

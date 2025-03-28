@@ -12,7 +12,7 @@ pub fn valueToTile(value: u32) !u32 {
     return std.math.log2_int(u32, value) - 1;
 }
 
-pub fn addTile(tiles: *[16]?u32, rand: std.rand.Random) void {
+pub fn addTile(tiles: *[16]?u32, rand: std.Random) void {
     const free_idx = blk: while (true) {
         const idx = rand.uintLessThan(usize, tiles.len);
         if (tiles[idx] == null)
