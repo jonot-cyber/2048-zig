@@ -22,4 +22,4 @@ To make a debug build, or
 ```
 zig build --release=safe
 ```
-for a release build. You will need to have installed zig on your computer. This was written with zig 0.12.0, so if the latest verison doesn't work, try that one.
+for a release build. You will need to have installed zig on your computer. This was written with zig 0.14.0, so if the latest verison doesn't work, try that one.
