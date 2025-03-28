@@ -105,7 +105,7 @@ pub const WaitCnt = packed struct {
     phi_terminal_output: PhiTerminalOutput,
     _unused: u1 = 0,
     prefetch_buffer: bool,
-    game_boy: bool = 0,
+    game_boy: bool = false,
 };
 
 pub const DmaCnt = packed struct {

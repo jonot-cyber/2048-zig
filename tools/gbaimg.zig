@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const zigimg = @import("zigimg/zigimg.zig");
+const zigimg = @import("zigimg");
 
 const GBAColor = packed struct {
     r: u5 = 0,
@@ -52,12 +52,14 @@ pub fn main() !void {
     var stream_source = std.io.StreamSource{
         .file = file,
     };
-    var img = try zigimg.png.PNG.readImage(std.heap.c_allocator, &stream_source);
+    var img = try zigimg.formats.png.PNG.readImage(std.heap.c_allocator, &stream_source);
     defer img.deinit(std.heap.c_allocator);
     if (@mod(img.height, 8) != 0 or @mod(img.width, 8) != 0) {
         std.debug.print("Image dimensions aren't valid.\n", .{});
         std.process.exit(1);
     }
+
+    try img.convert(std.heap.c_allocator, .rgba32);
 
     var palette: [16]GBAColor = undefined;
     palette[0] = .{
